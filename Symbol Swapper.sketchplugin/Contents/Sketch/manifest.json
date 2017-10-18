@@ -1,0 +1,27 @@
+{
+	"author" : "Jason Burns",
+	"commands" : [
+		{
+			"name" : "Symbol Swapper",
+			"shortcut" : "cmd option shift w",
+			"identifier" : "swapSelected",
+			"description" : "Swap instances of the selected symbol to a new master.",
+			"script" : "script.cocoascript",
+			"icon" : "icon-sr.png",
+			"handler" : "swapSelected"
+		}
+	],
+	"menu" : {
+		"title" : "Symbol Swapper",
+		"items" : [
+			"swapSelected"
+		],
+		"isRoot" : true
+	},
+	"identifier" : "com.sonburn.sketchplugins.symbol-swapper",
+	"version" : "0.1",
+	"description" : "Swap instances of a symbol to a new master, like a master in a library.",
+	"authorEmail" : "jason.burns@synchronoss.com",
+	"name" : "Symbol Swapper",
+	"appcast" : "https://raw.githubusercontent.com/sonburn/symbol-swapper/master/appcast.xml"
+}

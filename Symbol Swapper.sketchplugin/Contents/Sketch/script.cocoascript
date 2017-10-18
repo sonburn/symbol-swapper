@@ -1,0 +1,190 @@
+var strPluginName = "Symbol Swapper";
+
+var swapSelected = function(context) {
+	var predicate = NSPredicate.predicateWithFormat("className == 'MSSymbolMaster' || className == 'MSSymbolInstance'"),
+		symbols = context.selection.filteredArrayUsingPredicate(predicate),
+		symbolLoop = symbols.objectEnumerator(),
+		symbol,
+		count = 0;
+
+	if (symbols.length) {
+		var librarySettings = getLibrary(context),
+			library = librarySettings.library,
+			librarySymbols = getLibrarySymbols(context,library),
+			librarySymbolNames = getSymbolNames(librarySymbols),
+			instanceMap = {},
+			proceed = true;
+
+		if (proceed) {
+			while (symbol = symbolLoop.nextObject()) {
+				var symbolName = (symbol instanceof MSSymbolMaster) ? symbol.name().trim() : symbol.symbolMaster().name().trim(),
+					symbolIndex = librarySymbolNames.indexOf(symbolName);
+
+				if (symbolIndex >= 0) {
+					var symbolMatch = (library == 0) ? librarySymbols[symbolIndex] : AppController.sharedInstance().librariesController().importForeignSymbol_fromLibrary_intoDocument_(librarySymbols[symbolIndex],library,context.document.documentData()),
+						symbolMaster = (library == 0) ? symbolMatch : symbolMatch.symbolMaster(),
+						symbolID = String(symbol.symbolID()),
+						matchID = String(symbolMaster.symbolID());
+
+					instanceMap[symbolID] = matchID;
+
+					if (symbol instanceof MSSymbolMaster) {
+						var instances = symbol.allInstances();
+
+						for (var i = 0; i < instances.length; ++i) {
+							instances[i].changeInstanceToSymbol(symbolMaster);
+
+							count++;
+						}
+
+						if (librarySettings.deleteMasters == 1) {
+							symbol.removeFromParent();
+						}
+					} else {
+						symbol.changeInstanceToSymbol(symbolMaster);
+
+						count++;
+					}
+
+					var allInstances = getAllInstances(context);
+
+					for (var i = 0; i < allInstances.length; ++i) {
+						MSLayerPaster.updateOverridesOnInstance_withIDMap_(allInstances[i],instanceMap);
+					}
+				}
+			}
+
+			context.document.reloadInspector();
+
+			context.document.showMessage(count + " symbol(s) have been swapped to the " + library.name() + " library");
+		}
+	} else {
+		displayDialog("Please select at least one symbol master or instance.",strPluginName);
+	}
+}
+
+function displayDialog(message,title) {
+	NSApplication.sharedApplication().displayDialog_withTitle(message,title);
+}
+
+function getLibrary(context) {
+	var libraries = AppController.sharedInstance().librariesController().libraries(),
+		libraryLoop = libraries.objectEnumerator(),
+		library,
+		libraryArray = ["Current Document"],
+		lastLibrary = context.command.valueForKey_onLayer("lastLibrary",context.document.documentData());
+
+	while (library = libraryLoop.nextObject()) {
+		libraryArray.push(library.name());
+	}
+
+	var selectLibrary = (lastLibrary) ? libraryArray.indexOf(lastLibrary) : 0;
+
+	var alertWindow = COSAlertWindow.new();
+
+	var pluginIconPath = context.plugin.urlForResourceNamed("icon.png").path(),
+		pluginIcon = NSImage.alloc().initByReferencingFile(pluginIconPath);
+
+	alertWindow.setIcon(pluginIcon);
+
+	alertWindow.setMessageText(strPluginName);
+
+	alertWindow.setInformativeText("Swap the selected symbols and/or symbol instances to a master of the same name in a library.");
+
+	alertWindow.addTextLabelWithValue("Choose a new source for your selections...");
+
+	var symbolSource = createSelect(libraryArray,selectLibrary,NSMakeRect(0,0,300,28));
+	alertWindow.addAccessoryView(symbolSource);
+
+	var deleteMasters = createCheckbox({name:"Remove selected masters after swap to library",value:1},1,NSMakeRect(0,0,300,14));
+	alertWindow.addAccessoryView(deleteMasters);
+
+	alertWindow.addButtonWithTitle("Swap");
+	alertWindow.addButtonWithTitle("Cancel");
+
+	var responseCode = alertWindow.runModal();
+
+	if (responseCode == 1000) {
+		context.command.setValue_forKey_onLayer(libraryArray[symbolSource.indexOfSelectedItem()],"lastLibrary",context.document.documentData());
+
+		return {
+			library : (symbolSource.indexOfSelectedItem() == 0) ? 0 : libraries[symbolSource.indexOfSelectedItem()-1],
+			deleteMasters : deleteMasters.state()
+		}
+	} else return false;
+}
+
+function getLibrarySymbols(context,library) {
+	if (library == 0) {
+		var librarySymbols = context.document.documentData().localSymbols(),
+			libraryID = context.document.documentData().objectID();
+	} else {
+		var libraryPath = library.locationOnDisk().path(),
+			libraryFile = openFile(libraryPath),
+			librarySymbols = (libraryFile) ? libraryFile.documentData().allSymbols() : nil;
+			libraryID = libraryFile.documentData().objectID();
+
+			libraryFile.close();
+	}
+
+	if (librarySymbols && librarySymbols.length) {
+		return librarySymbols;
+	} else {
+		displayDialog("There are no symbols in the selected library.",strPluginName);
+		return false;
+	}
+}
+
+function createSelect(items,selectedItemIndex,frame) {
+	var comboBox = NSComboBox.alloc().initWithFrame(frame),
+		selectedItemIndex = (selectedItemIndex > -1) ? selectedItemIndex : 0;
+
+	comboBox.addItemsWithObjectValues(items);
+	comboBox.selectItemAtIndex(selectedItemIndex);
+
+	return comboBox;
+}
+
+function openFile(path) {
+	var file = MSDocument.new();
+
+	return (file.readFromURL_ofType_error(path,'com.bohemiancoding.sketch.drawing',nil)) ? file : nil;
+}
+
+function getSymbolNames(symbols) {
+	var symbolNames = [];
+
+	for (var i = 0; i < symbols.length; i++) {
+		symbolNames.push(symbols[i].name().trim());
+	}
+
+	return symbolNames;
+}
+
+var getAllInstances = function(context) {
+	var predicate = NSPredicate.predicateWithFormat("className == %@", "MSSymbolInstance"),
+		pageLoop = context.document.pages().objectEnumerator(),
+		page,
+		instanceArray = NSArray.array();
+
+	while (page = pageLoop.nextObject()) {
+		var pageInstances = page.children().filteredArrayUsingPredicate(predicate);
+
+		instanceArray = instanceArray.arrayByAddingObjectsFromArray(pageInstances);
+	}
+
+	return instanceArray;
+}
+
+function createCheckbox(item,flag,frame) {
+	var checkbox = NSButton.alloc().initWithFrame(frame),
+		flag = (flag == false) ? NSOffState : NSOnState;
+
+	checkbox.setButtonType(NSSwitchButton);
+	checkbox.setBezelStyle(0);
+	checkbox.setTitle(item.name);
+	checkbox.setTag(item.value);
+	checkbox.setState(flag);
+
+	return checkbox;
+}
