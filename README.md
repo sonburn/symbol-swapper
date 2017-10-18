@@ -39,6 +39,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.2** - Updated description in manifest.
 * **0.1** - Initial commit.
 
 # Contact
