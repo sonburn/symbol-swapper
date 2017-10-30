@@ -85,10 +85,12 @@ var swapSelected = function(context) {
 
 			context.document.reloadInspector();
 
+			var libraryName = (selectedLibrary == 0) ? "current document" : selectedLibrary.name() + " library";
+
 			if (count > 0) {
-				context.document.showMessage(count + " symbol instance(s) have been swapped to the " + selectedLibrary.name() + " library");
+				context.document.showMessage(count + " symbol instance(s) have been swapped to the " + libraryName);
 			} else {
-				context.document.showMessage("No matches were found in the " + selectedLibrary.name() + " library");
+				context.document.showMessage("No matches were found in the " + libraryName);
 			}
 		}
 	} else {
@@ -177,7 +179,9 @@ function getLibrary(context) {
 	var responseCode = alertWindow.runModal();
 
 	if (responseCode == 1000) {
-		context.command.setValue_forKey_onLayer(libraryArray[symbolSource.indexOfSelectedItem()],"lastLibrary",context.document.documentData());
+		var valueForLibrary = (symbolSource.indexOfSelectedItem() == 0) ? 0 : libraryArray[symbolSource.indexOfSelectedItem()];
+
+		context.command.setValue_forKey_onLayer(valueForLibrary,"lastLibrary",context.document.documentData());
 
 		return {
 			selectedLibrary : (symbolSource.indexOfSelectedItem() != 0) ? libraries[symbolSource.indexOfSelectedItem()-1] : 0,

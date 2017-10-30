@@ -19,7 +19,7 @@
 		"isRoot" : true
 	},
 	"identifier" : "com.sonburn.sketchplugins.symbol-swapper",
-	"version" : "0.3",
+	"version" : "0.4",
 	"description" : "Swap the selected symbols and/or symbol instances to another master.",
 	"authorEmail" : "jason.burns@synchronoss.com",
 	"name" : "Symbol Swapper",
