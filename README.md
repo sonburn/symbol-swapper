@@ -1,6 +1,6 @@
 ![Symbol Swapper](https://raw.githubusercontent.com/sonburn/symbol-swapper/master/logo.png)
 
-Swap the selected symbols and/or symbol instances to a master of the same name in a library.
+Swap the selected symbols and/or symbol instances to another master.
 
 ![Symbol Swapper](https://raw.githubusercontent.com/sonburn/symbol-swapper/master/Screenshots/Symbol%20Swapper.png)
 
@@ -18,7 +18,7 @@ Swap the selected symbols and/or symbol instances to a master of the same name i
 
 # Usage
 
-* cmd option shift w - Swap the selected symbols and/or symbol instances to a master of the same name in a library
+* cmd option shift w - Swap the selected symbols and/or symbol instances to another master
 
 # Installation
 
@@ -39,6 +39,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.3** - Added ability to choose a symbol of a different name, and to only swap selected instance (not siblings).
 * **0.2** - Updated description in manifest.
 * **0.1** - Initial commit.
 

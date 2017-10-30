@@ -5,7 +5,7 @@
 			"name" : "Symbol Swapper",
 			"shortcut" : "cmd option shift w",
 			"identifier" : "swapSelected",
-			"description" : "Swap the selected symbols and/or symbol instances to a master of the same name in a library.",
+			"description" : "Swap the selected symbols and/or symbol instances to another master.",
 			"script" : "script.cocoascript",
 			"icon" : "icon-sr.png",
 			"handler" : "swapSelected"
@@ -19,8 +19,8 @@
 		"isRoot" : true
 	},
 	"identifier" : "com.sonburn.sketchplugins.symbol-swapper",
-	"version" : "0.2",
-	"description" : "Swap the selected symbols and/or symbol instances to a master of the same name in a library.",
+	"version" : "0.3",
+	"description" : "Swap the selected symbols and/or symbol instances to another master.",
 	"authorEmail" : "jason.burns@synchronoss.com",
 	"name" : "Symbol Swapper",
 	"appcast" : "https://raw.githubusercontent.com/sonburn/symbol-swapper/master/appcast.xml"
