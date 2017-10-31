@@ -39,6 +39,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.5** - Improved handling for when last used library no longer exists, improved performance when swapping siblings.
 * **0.4** - Bug fixes for referencing current document.
 * **0.3** - Added ability to choose a symbol of a different name, and to only swap selected instance (not siblings).
 * **0.2** - Updated description in manifest.

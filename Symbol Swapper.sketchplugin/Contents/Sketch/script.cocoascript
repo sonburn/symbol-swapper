@@ -72,14 +72,14 @@ var swapSelected = function(context) {
 
 						count++;
 					}
+				}
+			}
 
-					if (librarySettings.includeSiblings == 1) {
-						var allInstances = getAllInstances(context);
+			if (Object.keys(instanceMap).length > 0 && librarySettings.includeSiblings == 1) {
+				var allInstances = getAllInstances(context);
 
-						for (var i = 0; i < allInstances.length; i++) {
-							MSLayerPaster.updateOverridesOnInstance_withIDMap_(allInstances[i],instanceMap);
-						}
-					}
+				for (var i = 0; i < allInstances.length; i++) {
+					MSLayerPaster.updateOverridesOnInstance_withIDMap_(allInstances[i],instanceMap);
 				}
 			}
 
@@ -87,11 +87,7 @@ var swapSelected = function(context) {
 
 			var libraryName = (selectedLibrary == 0) ? "current document" : selectedLibrary.name() + " library";
 
-			if (count > 0) {
-				context.document.showMessage(count + " symbol instance(s) have been swapped to the " + libraryName);
-			} else {
-				context.document.showMessage("No matches were found in the " + libraryName);
-			}
+			context.document.showMessage(count + " symbol instance(s) have been swapped to the " + libraryName);
 		}
 	} else {
 		displayDialog("Please select at least one symbol master or instance.",strPluginName);
@@ -113,7 +109,7 @@ function getLibrary(context) {
 		libraryArray.push(library.name());
 	}
 
-	var fetchLibrary = (lastLibrary && lastLibrary != 0) ? libraries[libraryArray.indexOf(lastLibrary)-1] : 0;
+	var fetchLibrary = (lastLibrary && lastLibrary != 0 && libraryArray.indexOf(lastLibrary) != -1) ? libraries[libraryArray.indexOf(lastLibrary)-1] : 0;
 	librarySymbols = getLibrarySymbols(context,fetchLibrary);
 	symbolArray = getSymbolNames(librarySymbols);
 
@@ -302,6 +298,7 @@ function createSelect(items,selectedItemIndex,frame) {
 
 	comboBox.addItemsWithObjectValues(items);
 	comboBox.selectItemAtIndex(selectedItemIndex);
+	comboBox.setEditable(0);
 
 	return comboBox;
 }
