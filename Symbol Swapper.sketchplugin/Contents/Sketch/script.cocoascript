@@ -103,7 +103,9 @@ function getLibrary(context) {
 		libraries = AppController.sharedInstance().librariesController().libraries(),
 		libraryLoop = libraries.objectEnumerator(),
 		library,
-		libraryArray = ["Current Document"];
+		libraryArray = ["Current Document"],
+		selectLibrary = 0,
+		selectSymbol = 0;
 
 	while (library = libraryLoop.nextObject()) {
 		libraryArray.push(library.name());
@@ -112,8 +114,6 @@ function getLibrary(context) {
 	var fetchLibrary = (lastLibrary && lastLibrary != 0 && libraryArray.indexOf(lastLibrary) != -1) ? libraries[libraryArray.indexOf(lastLibrary)-1] : 0;
 	librarySymbols = getLibrarySymbols(context,fetchLibrary);
 	symbolArray = getSymbolNames(librarySymbols);
-
-	var selectLibrary = (lastLibrary && lastLibrary != 0) ? libraryArray.indexOf(lastLibrary) : 0;
 
 	var alertWindow = COSAlertWindow.new();
 
@@ -128,6 +128,10 @@ function getLibrary(context) {
 
 	alertWindow.addTextLabelWithValue("Select a new symbol source...");
 
+	if (lastLibrary && lastLibrary != 0) {
+		selectLibrary = libraryArray.indexOf(lastLibrary);
+	}
+
 	var symbolSource = createSelect(libraryArray,selectLibrary,NSMakeRect(0,0,300,28));
 	alertWindow.addAccessoryView(symbolSource);
 
@@ -140,7 +144,16 @@ function getLibrary(context) {
 
 			symbolMaster.removeAllItems();
 			symbolMaster.addItemsWithObjectValues(symbolArray);
-			symbolMaster.selectItemAtIndex(0);
+
+			if (context.selection.length == 1) {
+				var symbolName = (context.selection[0] instanceof MSSymbolMaster) ? context.selection[0].name().trim() : context.selection[0].symbolMaster().name().trim();
+
+				if (symbolArray.indexOf(symbolName) != -1) {
+					symbolMaster.selectItemAtIndex(symbolArray.indexOf(symbolName));
+				} else {
+					symbolMaster.selectItemAtIndex(0);
+				}
+			}
 		})
 	});
 
@@ -159,7 +172,15 @@ function getLibrary(context) {
 		symbolMaster.setEnabled(1);
 	});
 
-	var symbolMaster = createSelect(symbolArray,0,NSMakeRect(0,0,300,28));
+	if (context.selection.length == 1) {
+		var symbolName = (context.selection[0] instanceof MSSymbolMaster) ? context.selection[0].name().trim() : context.selection[0].symbolMaster().name().trim();
+
+		if (symbolArray.indexOf(symbolName) != -1) {
+			selectSymbol = symbolArray.indexOf(symbolName);
+		}
+	}
+
+	var symbolMaster = createSelect(symbolArray,selectSymbol,NSMakeRect(0,0,300,28));
 	alertWindow.addAccessoryView(symbolMaster);
 	symbolMaster.setEnabled(0);
 
@@ -298,6 +319,7 @@ function createSelect(items,selectedItemIndex,frame) {
 
 	comboBox.addItemsWithObjectValues(items);
 	comboBox.selectItemAtIndex(selectedItemIndex);
+	comboBox.setNumberOfVisibleItems(16);
 	comboBox.setEditable(0);
 
 	return comboBox;
