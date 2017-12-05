@@ -1,6 +1,7 @@
 @import 'MochaJSDelegate.js';
 
-var strPluginName = "Symbol Swapper";
+var pluginName = "Symbol Swapper",
+	pluginIdentifier = "com.sonburn.sketchplugins.symbol-swapper";
 
 var librarySymbols,
 	symbolArray;
@@ -61,6 +62,10 @@ var swapSelected = function(context) {
 						for (var i = 0; i < instances.length; i++) {
 							instances[i].changeInstanceToSymbol(symbolMaster);
 
+							if (librarySettings.renameInstances == 1) {
+								instances[i].setName(symbolMaster.name());
+							}
+
 							count++;
 						}
 
@@ -69,6 +74,10 @@ var swapSelected = function(context) {
 						}
 					} else {
 						selection.changeInstanceToSymbol(symbolMaster);
+
+						if (librarySettings.renameInstances == 1) {
+							selection.setName(symbolMaster.name());
+						}
 
 						count++;
 					}
@@ -90,7 +99,7 @@ var swapSelected = function(context) {
 			context.document.showMessage(count + " symbol instance(s) have been swapped to the " + libraryName);
 		}
 	} else {
-		displayDialog("Please select at least one symbol master or instance.",strPluginName);
+		displayDialog("Please select at least one symbol master or instance.",pluginName);
 	}
 }
 
@@ -112,8 +121,17 @@ function getLibrary(context) {
 	}
 
 	var fetchLibrary = (lastLibrary && lastLibrary != 0 && libraryArray.indexOf(lastLibrary) != -1) ? libraries[libraryArray.indexOf(lastLibrary)-1] : 0;
+
 	librarySymbols = getLibrarySymbols(context,fetchLibrary);
 	symbolArray = getSymbolNames(librarySymbols);
+
+	var defaultSettings = {};
+
+	defaultSettings.includeSiblings = 1;
+	defaultSettings.renameInstances = 1;
+	defaultSettings.deleteMasters = 1;
+
+	defaultSettings = getCachedSettings(context,context.document.documentData(),defaultSettings);
 
 	var alertWindow = COSAlertWindow.new();
 
@@ -122,7 +140,7 @@ function getLibrary(context) {
 
 	alertWindow.setIcon(pluginIcon);
 
-	alertWindow.setMessageText(strPluginName);
+	alertWindow.setMessageText(pluginName);
 
 	alertWindow.setInformativeText("Swap the selected symbols and/or symbol instances to another master.");
 
@@ -184,10 +202,13 @@ function getLibrary(context) {
 	alertWindow.addAccessoryView(symbolMaster);
 	symbolMaster.setEnabled(0);
 
-	var includeSiblings = createCheckbox({name:"Swap siblings & overrides of selected instances",value:1},1,NSMakeRect(0,0,300,14));
+	var includeSiblings = createCheckbox({name:"Swap siblings & overrides of selected instances",value:1},defaultSettings.includeSiblings,NSMakeRect(0,0,300,16));
 	alertWindow.addAccessoryView(includeSiblings);
 
-	var deleteMasters = createCheckbox({name:"Remove selected masters after swap",value:1},1,NSMakeRect(0,0,300,14));
+	var renameInstances = createCheckbox({name:"Rename instances to new master name",value:1},defaultSettings.renameInstances,NSMakeRect(0,0,300,16));
+	alertWindow.addAccessoryView(renameInstances);
+
+	var deleteMasters = createCheckbox({name:"Remove selected masters after swap",value:1},defaultSettings.deleteMasters,NSMakeRect(0,0,300,16));
 	alertWindow.addAccessoryView(deleteMasters);
 
 	alertWindow.addButtonWithTitle("Swap");
@@ -199,11 +220,15 @@ function getLibrary(context) {
 		var valueForLibrary = (symbolSource.indexOfSelectedItem() == 0) ? 0 : libraryArray[symbolSource.indexOfSelectedItem()];
 
 		context.command.setValue_forKey_onLayer(valueForLibrary,"lastLibrary",context.document.documentData());
+		context.command.setValue_forKey_onLayer(includeSiblings.state(),"includeSiblings",context.document.documentData());
+		context.command.setValue_forKey_onLayer(renameInstances.state(),"renameInstances",context.document.documentData());
+		context.command.setValue_forKey_onLayer(deleteMasters.state(),"deleteMasters",context.document.documentData());
 
 		return {
 			selectedLibrary : (symbolSource.indexOfSelectedItem() != 0) ? libraries[symbolSource.indexOfSelectedItem()-1] : 0,
 			selectedMaster : (swapType.selectedCell().tag() == 1) ? librarySymbols[symbolMaster.indexOfSelectedItem()] : null,
 			includeSiblings : includeSiblings.state(),
+			renameInstances : renameInstances.state(),
 			deleteMasters : deleteMasters.state()
 		}
 	} else return false;
@@ -225,7 +250,7 @@ function getLibrarySymbols(context,library) {
 	if (librarySymbols && librarySymbols.length) {
 		return librarySymbols;
 	} else {
-		displayDialog("There are no symbols in the selected library.",strPluginName);
+		displayDialog("There are no symbols in the selected library.",pluginName);
 		return false;
 	}
 }
@@ -323,4 +348,17 @@ function createSelect(items,selectedItemIndex,frame) {
 	comboBox.setEditable(0);
 
 	return comboBox;
+}
+
+function getCachedSettings(context,location,settings) {
+	try {
+		for (i in settings) {
+			var value = context.command.valueForKey_onLayer_forPluginIdentifier(i,location,pluginIdentifier);
+			if (value) settings[i] = value;
+		}
+
+		return settings;
+	} catch(err) {
+		log(strProblemFetchingSettings);
+	}
 }
