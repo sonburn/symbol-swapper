@@ -39,6 +39,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.8** - Symbol list for Let Me Choose is now sorted alphabetically, and allows for freeform searching.
 * **0.7** - Added option to rename instances to master name, settings are now cached per document.
 * **0.6** - When swapping a single selection, the match will be pre-selected in symbol list if found.
 * **0.5** - Improved handling for when last used library no longer exists, improved performance when swapping siblings.

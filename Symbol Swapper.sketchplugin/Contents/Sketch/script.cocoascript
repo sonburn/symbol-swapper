@@ -248,6 +248,9 @@ function getLibrarySymbols(context,library) {
 	}
 
 	if (librarySymbols && librarySymbols.length) {
+		var sortByName = NSSortDescriptor.sortDescriptorWithKey_ascending("name",1);
+		librarySymbols = librarySymbols.sortedArrayUsingDescriptors([sortByName]);
+
 		return librarySymbols;
 	} else {
 		displayDialog("There are no symbols in the selected library.",pluginName);
@@ -345,7 +348,7 @@ function createSelect(items,selectedItemIndex,frame) {
 	comboBox.addItemsWithObjectValues(items);
 	comboBox.selectItemAtIndex(selectedItemIndex);
 	comboBox.setNumberOfVisibleItems(16);
-	comboBox.setEditable(0);
+	comboBox.setCompletes(1);
 
 	return comboBox;
 }
