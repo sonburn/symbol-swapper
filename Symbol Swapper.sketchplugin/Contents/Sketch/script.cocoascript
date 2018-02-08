@@ -1,10 +1,46 @@
 @import 'MochaJSDelegate.js';
 
+// Plugin variables
 var pluginName = "Symbol Swapper",
 	pluginIdentifier = "com.sonburn.sketchplugins.symbol-swapper";
 
-var librarySymbols,
-	symbolArray;
+// Function variables
+var libraries = AppController.sharedInstance().librariesController().libraries(),
+	libraryLoop = libraries.objectEnumerator(),
+	library,
+	libraryArray = ["Current Document"],
+	tempLibraryArray = NSMutableArray.array(),
+	librarySymbols,
+	symbolArray,
+	newLibrarySelectsArray = [];
+
+// Iterate through the libraries...
+while (library = libraryLoop.nextObject()) {
+	// Create a library object
+	var libraryObject = {};
+	libraryObject.libraryName = String(library.name());
+	libraryObject.libraryID = String(library.libraryID());
+
+	// Push library name to old library array (old method to phase out)
+	libraryArray.push(String(library.name()));
+
+	// Add library object to new library array (new method)
+	tempLibraryArray.addObject(libraryObject);
+}
+
+// Sort the new library array by libraryName
+var tempLibrarySort = NSSortDescriptor.sortDescriptorWithKey_ascending("libraryName",1),
+	tempLibraryArray = NSMutableArray.arrayWithArray(tempLibraryArray.sortedArrayUsingDescriptors([tempLibrarySort]));
+
+// Create a Current Document library object
+var libraryObject = {};
+libraryObject.libraryName = "Current Document";
+libraryObject.libraryID = "0";
+
+// Insert the Current Document object at the beginning of the new library array
+tempLibraryArray.insertObject_atIndex(libraryObject,0);
+
+
 
 var swapSelected = function(context) {
 	var predicate = NSPredicate.predicateWithFormat("className == 'MSSymbolMaster' || className == 'MSSymbolInstance'"),
@@ -88,7 +124,11 @@ var swapSelected = function(context) {
 				var allInstances = getAllInstances(context);
 
 				for (var i = 0; i < allInstances.length; i++) {
-					MSLayerPaster.updateOverridesOnInstance_withIDMap_(allInstances[i],instanceMap);
+					if (!MSLayerPaster.updateOverridesOnInstance_withIDMap_) {
+						allInstances[i].updateOverridesWithObjectIDMap(instanceMap);
+					} else {
+						MSLayerPaster.updateOverridesOnInstance_withIDMap_(allInstances[i],instanceMap);
+					}
 				}
 			}
 
@@ -103,27 +143,164 @@ var swapSelected = function(context) {
 	}
 }
 
+
+
+var swapLibrary = function(context) {
+	var foreignSymbolLibraries = NSMutableArray.array(),
+		foreignSymbols = context.document.documentData().foreignSymbols(),
+		foreignSymbolLoop = foreignSymbols.objectEnumerator(),
+		foreignSymbol;
+
+	while (foreignSymbol = foreignSymbolLoop.nextObject()) {
+		var foreignObject = {};
+
+		foreignObject.libraryName = String(foreignSymbol.sourceLibraryName());
+		foreignObject.libraryID = String(foreignSymbol.libraryID());
+
+		if (!foreignSymbolLibraries.containsObject(foreignObject)) {
+			foreignSymbolLibraries.addObject(foreignObject);
+		}
+	}
+
+	var foreignSymbolLibrarySort = NSSortDescriptor.sortDescriptorWithKey_ascending("libraryName",1),
+		foreignSymbolLibraries = foreignSymbolLibraries.sortedArrayUsingDescriptors([foreignSymbolLibrarySort]),
+		foreignSymbolLibraryLoop = foreignSymbolLibraries.objectEnumerator(),
+		foreignSymbolLibrary,
+		newLibraryArray = ["Swap to…"];
+
+	for (i = 0; i < tempLibraryArray.length; i++) {
+		newLibraryArray.push(tempLibraryArray[i].libraryName);
+	}
+
+	var alertWindow = newAlertWindow(context,"Symbol Swap Libraries","Swap all symbols from one library to another.");
+
+	var introText = createBoldLabel("This document contains " + foreignSymbols.count() + " imported symbols, from " + foreignSymbolLibraries.count() + " libraries.",12,NSMakeRect(0,0,300,32));
+	alertWindow.addAccessoryView(introText);
+
+	alertWindow.addAccessoryView(createDivider(NSMakeRect(0,0,300,1)));
+
+	while (foreignSymbolLibrary = foreignSymbolLibraryLoop.nextObject()) {
+		var foreignSymbolLoop = foreignSymbols.objectEnumerator(),
+			foreignSymbol,
+			thisLibraryName = foreignSymbolLibrary.libraryName,
+			thisLibraryID = foreignSymbolLibrary.libraryID,
+			thisLibraryCount = 0;
+
+		while (foreignSymbol = foreignSymbolLoop.nextObject()) {
+			var foreignLibraryName = String(foreignSymbol.sourceLibraryName()),
+				foreignLibraryID = String(foreignSymbol.libraryID());
+
+			if (foreignLibraryName == thisLibraryName && foreignLibraryID == thisLibraryID) {
+				thisLibraryCount++;
+			}
+		}
+
+		var libraryTitleText = createBoldLabel(thisLibraryName,12,NSMakeRect(0,0,300,16));
+		alertWindow.addAccessoryView(libraryTitleText);
+
+		var libraryCountText = createLabel("Symbol Count: " + thisLibraryCount,10,NSMakeRect(0,0,300,12));
+		alertWindow.addAccessoryView(libraryCountText);
+
+		var libraryIDText = createLabel("Library ID: " + thisLibraryID,10,NSMakeRect(0,0,300,12));
+		alertWindow.addAccessoryView(libraryIDText);
+
+		var newLibrarySelect = createLibrarySelect(newLibraryArray,alertWindow);
+		alertWindow.addAccessoryView(newLibrarySelect);
+
+		newLibrarySelectsArray.push(newLibrarySelect);
+
+		alertWindow.addAccessoryView(createDivider(NSMakeRect(0,0,300,1)));
+	}
+
+	alertWindow.addButtonWithTitle("Swap");
+	alertWindow.addButtonWithTitle("Cancel");
+
+	alertWindow.buttons().objectAtIndex(0).setEnabled(0);
+
+	var responseCode = alertWindow.runModal();
+
+	if (responseCode == 1000) {
+		var changedSymbolCount = 0,
+			ignoredSymbolCount = 0;
+
+		for (i = 0; i < newLibrarySelectsArray.length; i++) {
+			if (newLibrarySelectsArray[i].indexOfSelectedItem() != 0) {
+				var currentLibraryName = foreignSymbolLibraries[i].libraryName,
+					currentLibraryID = foreignSymbolLibraries[i].libraryID,
+					newLibraryName = tempLibraryArray[newLibrarySelectsArray[i].indexOfSelectedItem() - 1].libraryName, // Shifted by one to account for "Swap to…"
+					newLibraryID = tempLibraryArray[newLibrarySelectsArray[i].indexOfSelectedItem() - 1].libraryID; // Shifted by one to account for "Swap to…"
+
+				var foreignSymbolLoop = foreignSymbols.objectEnumerator(),
+					foreignSymbol
+
+				while (foreignSymbol = foreignSymbolLoop.nextObject()) {
+					var foreignLibraryName = String(foreignSymbol.sourceLibraryName()),
+						foreignLibraryID = String(foreignSymbol.libraryID());
+
+					if (foreignLibraryName == currentLibraryName && foreignLibraryID == currentLibraryID) {
+						var libraryIndex;
+
+						for (j = 0; j < libraries.length; j++) {
+							if (String(libraries[j].name()) == newLibraryName && String(libraries[j].libraryID()) == newLibraryID) {
+								libraryIndex = j;
+							}
+						}
+
+						if (foreignSymbol.masterFromLibrary(libraries.objectAtIndex(libraryIndex))) {
+							foreignSymbol.setLibraryID(newLibraryID);
+							foreignSymbol.setSourceLibraryName(newLibraryName);
+
+							changedSymbolCount++;
+						} else {
+							ignoredSymbolCount++;
+						}
+					}
+				}
+			}
+		}
+
+		context.document.showMessage(changedSymbolCount + " symbols have been swapped to new libraries, " + ignoredSymbolCount + " symbols were ignored as they weren't found in the new library");
+	} else return false;
+}
+
+function newAlertWindow(context,name,text) {
+	var alertWindow = COSAlertWindow.new();
+
+	var iconPath = context.plugin.urlForResourceNamed("icon.png").path(),
+		icon = NSImage.alloc().initByReferencingFile(iconPath);
+
+	alertWindow.setIcon(icon);
+	alertWindow.setMessageText(name);
+	alertWindow.setInformativeText(text);
+
+	return alertWindow;
+}
+
+function getMatchCount(array,match) {
+	var counts = {};
+
+	for (var i = 0; i < array.length; i++) {
+		var num = array[i];
+		counts[num] = counts[num] ? counts[num] + 1 : 1;
+	}
+
+	return counts[match];
+}
+
 function displayDialog(message,title) {
 	NSApplication.sharedApplication().displayDialog_withTitle(message,title);
 }
 
 function getLibrary(context) {
 	var lastLibrary = context.command.valueForKey_onLayer("lastLibrary",context.document.documentData()),
-		libraries = AppController.sharedInstance().librariesController().libraries(),
-		libraryLoop = libraries.objectEnumerator(),
 		library,
-		libraryArray = ["Current Document"],
 		selectLibrary = 0,
 		selectSymbol = 0;
-
-	while (library = libraryLoop.nextObject()) {
-		libraryArray.push(library.name());
-	}
 
 	var fetchLibrary = (lastLibrary && lastLibrary != 0 && libraryArray.indexOf(lastLibrary) != -1) ? libraries[libraryArray.indexOf(lastLibrary)-1] : 0;
 
 	librarySymbols = getLibrarySymbols(context,fetchLibrary);
-	symbolArray = getSymbolNames(librarySymbols);
+	symbolArray = (librarySymbols && librarySymbols.length) ? getSymbolNames(librarySymbols) : ["No Symbols"];
 
 	var defaultSettings = {};
 
@@ -133,16 +310,7 @@ function getLibrary(context) {
 
 	defaultSettings = getCachedSettings(context,context.document.documentData(),defaultSettings);
 
-	var alertWindow = COSAlertWindow.new();
-
-	var pluginIconPath = context.plugin.urlForResourceNamed("icon.png").path(),
-		pluginIcon = NSImage.alloc().initByReferencingFile(pluginIconPath);
-
-	alertWindow.setIcon(pluginIcon);
-
-	alertWindow.setMessageText(pluginName);
-
-	alertWindow.setInformativeText("Swap the selected symbols and/or symbol instances to another master.");
+	var alertWindow = newAlertWindow(context,"Symbol Swap Selections","Swap the selected symbols and/or symbol instances to another master.");
 
 	alertWindow.addTextLabelWithValue("Select a new symbol source...");
 
@@ -153,12 +321,19 @@ function getLibrary(context) {
 	var symbolSource = createSelect(libraryArray,selectLibrary,NSMakeRect(0,0,300,28));
 	alertWindow.addAccessoryView(symbolSource);
 
-	var symbolSourceDelegate = new MochaJSDelegate({
+	var newLibrarySelectDelegate = new MochaJSDelegate({
 		"comboBoxSelectionDidChange:" : (function() {
 			var selectedLibrary = (symbolSource.indexOfSelectedItem() == 0) ? 0 : libraries[symbolSource.indexOfSelectedItem()-1];
 
 			librarySymbols = getLibrarySymbols(context,selectedLibrary);
-			symbolArray = getSymbolNames(librarySymbols);
+
+			if (librarySymbols && librarySymbols.length) {
+				symbolArray = getSymbolNames(librarySymbols);
+				swapButton.setEnabled(1);
+			} else {
+				symbolArray = ["No Symbols"];
+				swapButton.setEnabled(0);
+			}
 
 			symbolMaster.removeAllItems();
 			symbolMaster.addItemsWithObjectValues(symbolArray);
@@ -175,7 +350,7 @@ function getLibrary(context) {
 		})
 	});
 
-	symbolSource.setDelegate(symbolSourceDelegate.getClassInstance());
+	symbolSource.setDelegate(newLibrarySelectDelegate.getClassInstance());
 
 	var swapType = createRadioButtons(["Swap with symbol master of same name","Let me choose..."],0);
 	alertWindow.addAccessoryView(swapType);
@@ -211,7 +386,14 @@ function getLibrary(context) {
 	var deleteMasters = createCheckbox({name:"Remove selected masters after swap",value:1},defaultSettings.deleteMasters,NSMakeRect(0,0,300,16));
 	alertWindow.addAccessoryView(deleteMasters);
 
-	alertWindow.addButtonWithTitle("Swap");
+	var swapButton = alertWindow.addButtonWithTitle("Swap");
+
+	if (librarySymbols && librarySymbols.length) {
+		swapButton.setEnabled(1);
+	} else {
+		swapButton.setEnabled(0);
+	}
+
 	alertWindow.addButtonWithTitle("Cancel");
 
 	var responseCode = alertWindow.runModal();
@@ -247,15 +429,10 @@ function getLibrarySymbols(context,library) {
 			libraryFile.close();
 	}
 
-	if (librarySymbols && librarySymbols.length) {
-		var sortByName = NSSortDescriptor.sortDescriptorWithKey_ascending("name",1);
-		librarySymbols = librarySymbols.sortedArrayUsingDescriptors([sortByName]);
+	var sortByName = NSSortDescriptor.sortDescriptorWithKey_ascending("name",1);
+	librarySymbols = librarySymbols.sortedArrayUsingDescriptors([sortByName]);
 
-		return librarySymbols;
-	} else {
-		displayDialog("There are no symbols in the selected library.",pluginName);
-		return false;
-	}
+	return librarySymbols;
 }
 
 function openFile(path) {
@@ -351,6 +528,69 @@ function createSelect(items,selectedItemIndex,frame) {
 	comboBox.setCompletes(1);
 
 	return comboBox;
+}
+
+function createLibrarySelect(newLibraryArray,alertWindow) {
+	var newLibrarySelect = createSelect(newLibraryArray,0,NSMakeRect(0,0,300,27))
+
+	var delegate = new MochaJSDelegate({
+		"comboBoxSelectionDidChange:" : (function() {
+			if (newLibrarySelect.indexOfSelectedItem() != 0) {
+				alertWindow.buttons().objectAtIndex(0).setEnabled(1);
+			} else {
+				var nothingSelected = true;
+
+				for (i = 0; i < newLibrarySelectsArray.length; i++) {
+					if (newLibrarySelectsArray[i].indexOfSelectedItem() != 0) {
+						nothingSelected = false;
+					}
+				}
+
+				if (nothingSelected) {
+					alertWindow.buttons().objectAtIndex(0).setEnabled(0);
+				}
+			}
+		})
+	});
+
+	newLibrarySelect.setDelegate(delegate.getClassInstance());
+
+	return newLibrarySelect;
+}
+
+function createLabel(text,size,frame) {
+	var label = NSTextField.alloc().initWithFrame(frame);
+
+	label.setStringValue(text);
+	label.setFont(NSFont.systemFontOfSize(size));
+	label.setBezeled(false);
+	label.setDrawsBackground(false);
+	label.setEditable(false);
+	label.setSelectable(false);
+
+	return label;
+}
+
+function createBoldLabel(text,size,frame) {
+	var label = NSTextField.alloc().initWithFrame(frame);
+
+	label.setStringValue(text);
+	label.setFont(NSFont.boldSystemFontOfSize(size));
+	label.setBezeled(false);
+	label.setDrawsBackground(false);
+	label.setEditable(false);
+	label.setSelectable(false);
+
+	return label;
+}
+
+function createDivider(frame) {
+	var divider = NSView.alloc().initWithFrame(frame);
+
+	divider.setWantsLayer(1);
+	divider.layer().setBackgroundColor(CGColorCreateGenericRGB(204/255,204/255,204/255,1.0));
+
+	return divider;
 }
 
 function getCachedSettings(context,location,settings) {

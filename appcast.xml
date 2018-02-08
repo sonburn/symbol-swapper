@@ -6,15 +6,15 @@
 		<description>Swap the selected symbols and/or symbol instances to another master.</description>
 		<language>en</language>
 		<item>
-			<title>Version 0.8</title>
+			<title>Version 0.9</title>
 			<description>
 				<![CDATA[
 				<ul>
-				<li>Symbol list for Let Me Choose is now sorted alphabetically, and allows for freeform searching.</li>
+				<li>Fixed bug introduced in Sketch 48 as MSLayerPaster functionality was changed. Added new functionality to swap libraries individually.</li>
 				</ul>
 				]]>
 			</description>
-			<enclosure url="https://github.com/sonburn/symbol-swapper/archive/master.zip" sparkle:version="0.8" />
+			<enclosure url="https://github.com/sonburn/symbol-swapper/archive/master.zip" sparkle:version="0.9" />
 		</item>
 	</channel>
 </rss>

@@ -2,25 +2,34 @@
 	"author" : "Jason Burns",
 	"commands" : [
 		{
-			"name" : "Symbol Swapper",
+			"name" : "Symbol Swap Selections",
 			"shortcut" : "cmd option shift w",
 			"identifier" : "swapSelected",
 			"description" : "Swap the selected symbols and/or symbol instances to another master.",
 			"script" : "script.cocoascript",
 			"icon" : "icon-sr.png",
 			"handler" : "swapSelected"
+		},
+		{
+			"name" : "Symbol Swap Libraries",
+			"shortcut" : "cmd option shift b",
+			"identifier" : "swapLibrary",
+			"description" : "Swap all symbols from one library to another.",
+			"script" : "script.cocoascript",
+			"icon" : "icon-sr.png",
+			"handler" : "swapLibrary"
 		}
 	],
 	"menu" : {
 		"title" : "Symbol Swapper",
 		"items" : [
-			"swapSelected"
-		],
-		"isRoot" : true
+			"swapSelected",
+			"swapLibrary"
+		]
 	},
 	"identifier" : "com.sonburn.sketchplugins.symbol-swapper",
-	"version" : "0.8",
-	"description" : "Swap the selected symbols and/or symbol instances to another master.",
+	"version" : "0.9",
+	"description" : "Swap the selected symbols and/or symbol instances to another master, or swap entire libraries.",
 	"authorEmail" : "jason.burns@synchronoss.com",
 	"name" : "Symbol Swapper",
 	"appcast" : "https://raw.githubusercontent.com/sonburn/symbol-swapper/master/appcast.xml"
