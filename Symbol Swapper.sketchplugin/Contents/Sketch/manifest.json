@@ -18,19 +18,42 @@
 			"script" : "script.cocoascript",
 			"icon" : "icon-sr.png",
 			"handler" : "swapLibrary"
+		},
+		{
+			"name": "Report Issue",
+			"identifier": "report",
+			"script" : "script.cocoascript",
+			"handler": "report"
+		},
+		{
+			"name": "Other Plugins",
+			"identifier": "plugins",
+			"script" : "script.cocoascript",
+			"handler": "plugins"
+		},
+		{
+			"name": "Donate",
+			"identifier": "donate",
+			"script" : "script.cocoascript",
+			"handler": "donate"
 		}
 	],
 	"menu" : {
 		"title" : "Symbol Swapper",
 		"items" : [
 			"swapSelected",
-			"swapLibrary"
+			"swapLibrary",
+			"-",
+			"report",
+			"plugins",
+			"donate"
 		]
 	},
 	"identifier" : "com.sonburn.sketchplugins.symbol-swapper",
-	"version" : "0.9",
+	"version" : "0.10",
 	"description" : "Swap the selected symbols and/or symbol instances to another master, or swap entire libraries.",
 	"authorEmail" : "jason.burns@synchronoss.com",
 	"name" : "Symbol Swapper",
+	"icon" : "icon.png",
 	"appcast" : "https://raw.githubusercontent.com/sonburn/symbol-swapper/master/appcast.xml"
 }

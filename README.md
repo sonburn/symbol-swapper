@@ -42,6 +42,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.10** - Performance optimizations, bug fixes and support for Sketch 50.
 * **0.9** - Fixed bug introduced in Sketch 48 as MSLayerPaster functionality was changed. Added new functionality to swap libraries individually.
 * **0.8** - Symbol list for Let Me Choose is now sorted alphabetically, and allows for freeform searching.
 * **0.7** - Added option to rename instances to master name, settings are now cached per document.
