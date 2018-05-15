@@ -1,11 +1,15 @@
 @import "MochaJSDelegate.js";
 
-// Plugin variables
 var pluginName = "Symbol Swapper",
 	pluginIdentifier = "com.sonburn.sketchplugins.symbol-swapper",
 	debugMode = false;
 
-// Function variables
+var panelWidth = 350,
+	panelHeight = 530,
+	panelTitle = 44,
+	gutterWidth = 15,
+	uiButtons = [];
+
 var librarySort = NSSortDescriptor.sortDescriptorWithKey_ascending("name",1),
 	libraries = AppController.sharedInstance().librariesController().libraries().sortedArrayUsingDescriptors([librarySort]),
 	libraryLoop = libraries.objectEnumerator(),
@@ -31,6 +35,7 @@ var swapSelected = function(context) {
 				selectedMaster = librarySettings.selectedMaster,
 				selectionLoop = selection.objectEnumerator(),
 				selection,
+				symbolMaster,
 				instanceMap = {},
 				count = 0;
 
@@ -113,123 +118,181 @@ var swapSelected = function(context) {
 			context.document.showMessage(count + " symbol instance(s) have been swapped to the " + libraryName);
 		}
 	} else {
-		displayDialog("Please select at least one symbol master or instance.",pluginName);
+		displayDialog(pluginName,"Please select at least one symbol master or instance.");
 	}
 }
 
 var swapLibrary = function(context) {
-	var foreignSymbolLibraries = NSMutableArray.array(),
-		foreignSymbols = context.document.documentData().foreignSymbols(),
-		foreignSymbolLoop = foreignSymbols.objectEnumerator(),
-		foreignSymbol;
+	var localSymbols = context.document.documentData().localSymbols(),
+		foreignSymbols = context.document.documentData().foreignSymbols();
 
-	while (foreignSymbol = foreignSymbolLoop.nextObject()) {
-		var foreignObject = {};
+	if (localSymbols.length || foreignSymbols.length) {
+		var alertWindow = createAlertWindow(context,"Symbol Swap Libraries","Swap all symbols from one source to another.");
 
-		foreignObject.name = String(foreignSymbol.sourceLibraryName());
-		foreignObject.id = String(foreignSymbol.libraryID());
+		alertWindow.addAccessoryView(createListDivider(NSMakeRect(0,0,300,1)));
 
-		if (!foreignSymbolLibraries.containsObject(foreignObject)) {
-			foreignSymbolLibraries.addObject(foreignObject);
+		if (localSymbols.length) {
+			var thisLibraryName = "Current Document",
+				thisLibraryCount = localSymbols.count(),
+				libraryTitleText = createLabel(thisLibraryName,12,NSMakeRect(0,0,300,16),1),
+				libraryCountText = createLabel("Symbol Count: " + thisLibraryCount,10,NSMakeRect(0,0,300,12)),
+				librarySelect = createLibrarySelect(alertWindow);
+
+			alertWindow.addAccessoryView(libraryTitleText);
+			alertWindow.addAccessoryView(libraryCountText);
+			alertWindow.addAccessoryView(librarySelect);
+			alertWindow.addAccessoryView(createListDivider(NSMakeRect(0,0,300,1)));
 		}
-	}
 
-	var foreignSymbolLibrarySort = NSSortDescriptor.sortDescriptorWithKey_ascending("name",1),
-		foreignSymbolLibraries = foreignSymbolLibraries.sortedArrayUsingDescriptors([foreignSymbolLibrarySort]),
-		foreignSymbolLibraryLoop = foreignSymbolLibraries.objectEnumerator(),
-		foreignSymbolLibrary;
+		if (foreignSymbols.length) {
+			var foreignSymbolLibraries = NSMutableArray.array(),
+				foreignSymbolLoop = foreignSymbols.objectEnumerator(),
+				foreignSymbol;
 
-	var alertWindow = newAlertWindow(context,"Symbol Swap Libraries","Swap all symbols from one library to another.");
+			while (foreignSymbol = foreignSymbolLoop.nextObject()) {
+				var foreignObject = {};
 
-	var introText = createBoldLabel("This document contains " + foreignSymbols.count() + " imported symbols, from " + foreignSymbolLibraries.count() + " libraries.",12,NSMakeRect(0,0,300,32));
-	alertWindow.addAccessoryView(introText);
+				foreignObject.name = String(foreignSymbol.sourceLibraryName());
+				foreignObject.id = String(foreignSymbol.libraryID());
 
-	alertWindow.addAccessoryView(createDivider(NSMakeRect(0,0,300,1)));
-
-	while (foreignSymbolLibrary = foreignSymbolLibraryLoop.nextObject()) {
-		var foreignSymbolLoop = foreignSymbols.objectEnumerator(),
-			foreignSymbol,
-			thisLibraryName = foreignSymbolLibrary.name,
-			thisLibraryID = foreignSymbolLibrary.id,
-			thisLibraryCount = 0;
-
-		while (foreignSymbol = foreignSymbolLoop.nextObject()) {
-			var foreignLibraryName = String(foreignSymbol.sourceLibraryName()),
-				foreignLibraryID = String(foreignSymbol.libraryID());
-
-			if (foreignLibraryName == thisLibraryName && foreignLibraryID == thisLibraryID) {
-				thisLibraryCount++;
+				if (!foreignSymbolLibraries.containsObject(foreignObject)) {
+					foreignSymbolLibraries.addObject(foreignObject);
+				}
 			}
-		}
 
-		var libraryTitleText = createBoldLabel(thisLibraryName,12,NSMakeRect(0,0,300,16));
-		alertWindow.addAccessoryView(libraryTitleText);
+			var foreignSymbolLibrarySort = NSSortDescriptor.sortDescriptorWithKey_ascending("name",1),
+				foreignSymbolLibraries = foreignSymbolLibraries.sortedArrayUsingDescriptors([foreignSymbolLibrarySort]),
+				foreignSymbolLibraryLoop = foreignSymbolLibraries.objectEnumerator(),
+				foreignSymbolLibrary;
 
-		var libraryCountText = createLabel("Symbol Count: " + thisLibraryCount,10,NSMakeRect(0,0,300,12));
-		alertWindow.addAccessoryView(libraryCountText);
-
-		var libraryIDText = createLabel("Library ID: " + thisLibraryID,10,NSMakeRect(0,0,300,12));
-		alertWindow.addAccessoryView(libraryIDText);
-
-		var librarySelect = createLibrarySelect(alertWindow);
-		alertWindow.addAccessoryView(librarySelect);
-
-		librarySelects.push(librarySelect);
-
-		alertWindow.addAccessoryView(createDivider(NSMakeRect(0,0,300,1)));
-	}
-
-	alertWindow.addButtonWithTitle("Swap");
-	alertWindow.addButtonWithTitle("Cancel");
-
-	alertWindow.buttons().objectAtIndex(0).setEnabled(0);
-
-	var responseCode = alertWindow.runModal();
-
-	if (responseCode == 1000) {
-		var changedSymbolCount = 0,
-			ignoredSymbolCount = 0;
-
-		for (i = 0; i < librarySelects.length; i++) {
-			if (librarySelects[i].indexOfSelectedItem() != 0) {
-				var currentLibraryName = foreignSymbolLibraries[i].name,
-					currentLibraryID = foreignSymbolLibraries[i].id,
-					newLibraryName = libraries[librarySelects[i].indexOfSelectedItem() - 1].name(), // Shifted to account for "Swap to…"
-					newLibraryID = libraries[librarySelects[i].indexOfSelectedItem() - 1].libraryID(); // Shifted to account for "Swap to…"
-
-				var foreignSymbolLoop = foreignSymbols.objectEnumerator(),
+			while (foreignSymbolLibrary = foreignSymbolLibraryLoop.nextObject()) {
+				var thisLibraryName = foreignSymbolLibrary.name,
+					thisLibraryID = foreignSymbolLibrary.id,
+					thisLibraryCount = 0,
+					foreignSymbolLoop = foreignSymbols.objectEnumerator(),
 					foreignSymbol;
 
 				while (foreignSymbol = foreignSymbolLoop.nextObject()) {
-					var foreignLibraryName = String(foreignSymbol.sourceLibraryName()),
-						foreignLibraryID = String(foreignSymbol.libraryID());
+					var foreignSymbolLibraryName = String(foreignSymbol.sourceLibraryName()),
+						foreignSymbolLibraryID = String(foreignSymbol.libraryID());
 
-					if (foreignLibraryName == currentLibraryName && foreignLibraryID == currentLibraryID) {
-						var libraryIndex;
+					if (foreignSymbolLibraryName == thisLibraryName && foreignSymbolLibraryID == thisLibraryID) {
+						thisLibraryCount++;
+					}
+				}
 
-						for (j = 0; j < libraries.length; j++) {
-							if (String(libraries[j].name()) == newLibraryName && String(libraries[j].libraryID()) == newLibraryID) {
-								libraryIndex = j;
+				var libraryTitleText = createLabel(thisLibraryName,12,NSMakeRect(0,0,300,16),1),
+					libraryCountText = createLabel("Symbol Count: " + thisLibraryCount,10,NSMakeRect(0,0,300,12)),
+					libraryIDText = createLabel("Library ID: " + thisLibraryID,10,NSMakeRect(0,0,300,12)),
+					librarySelect = createLibrarySelect(alertWindow);
+
+				alertWindow.addAccessoryView(libraryTitleText);
+				alertWindow.addAccessoryView(libraryCountText);
+				alertWindow.addAccessoryView(libraryIDText);
+				alertWindow.addAccessoryView(librarySelect);
+				alertWindow.addAccessoryView(createListDivider(NSMakeRect(0,0,300,1)));
+			}
+		}
+
+		alertWindow.addButtonWithTitle("Swap");
+		alertWindow.addButtonWithTitle("Cancel");
+
+		alertWindow.buttons().objectAtIndex(0).setEnabled(0);
+
+		var responseCode = alertWindow.runModal();
+
+		if (responseCode == 1000) {
+			var changedSymbolCount = 0,
+				ignoredLocalSymbols = NSMutableArray.array(),
+				ignoredForeignSymbols = NSMutableArray.array();
+
+			for (i = 0; i < librarySelects.length; i++) {
+				if (librarySelects[i].indexOfSelectedItem() != 0) {
+					var selectedLibrary = librarySelects[i].indexOfSelectedItem() - 1, // Shifted to account for "Swap to…"
+						selectedLibraryName = libraries[selectedLibrary].name(),
+						selectedLibraryID = libraries[selectedLibrary].libraryID();
+
+					if (i == 0 && localSymbols.length) {
+						var localSymbolLoop = localSymbols.objectEnumerator(),
+							localSymbol;
+
+						while (localSymbol = localSymbolLoop.nextObject()) {
+							var foreignSymbol = getForeignSymbolByName(localSymbol.name(),libraries[selectedLibrary]),
+								symbolMaster = (foreignSymbol) ? importForeignSymbol(foreignSymbol,libraries[selectedLibrary]).symbolMaster() : false;
+
+							if (symbolMaster) {
+								var instances = localSymbol.allInstances(),
+									instanceLoop = instances.objectEnumerator(),
+									instance;
+
+								while (instance = instanceLoop.nextObject()) {
+									instance.changeInstanceToSymbol(symbolMaster);
+									instance.setName(symbolMaster.name());
+								}
+
+								localSymbol.removeFromParent();
+
+								changedSymbolCount++;
+							} else {
+								ignoredLocalSymbols.addObject(localSymbol);
 							}
 						}
+					} else {
+						var currentLibraryName = (localSymbols.length) ? foreignSymbolLibraries[i - 1].name : foreignSymbolLibraries[i].name,
+							currentLibraryID = (localSymbols.length) ? foreignSymbolLibraries[i - 1].id : foreignSymbolLibraries[i].id,
+							foreignSymbolLoop = foreignSymbols.objectEnumerator(),
+							foreignSymbol;
 
-						if (foreignSymbol.masterFromLibrary(libraries.objectAtIndex(libraryIndex))) {
-							foreignSymbol.setLibraryID(newLibraryID);
-							foreignSymbol.setSourceLibraryName(newLibraryName);
+						while (foreignSymbol = foreignSymbolLoop.nextObject()) {
+							var foreignSymbolLibraryName = String(foreignSymbol.sourceLibraryName()),
+								foreignSymbolLibraryID = String(foreignSymbol.libraryID());
 
-							changedSymbolCount++;
-						} else {
-							ignoredSymbolCount++;
+							if (foreignSymbolLibraryName == currentLibraryName && foreignSymbolLibraryID == currentLibraryID) {
+								var libraryIndex;
+
+								for (j = 0; j < libraries.length; j++) {
+									if (String(libraries[j].name()) == selectedLibraryName && String(libraries[j].libraryID()) == selectedLibraryID) {
+										libraryIndex = j;
+									}
+								}
+
+								if (foreignSymbol.masterFromLibrary(libraries.objectAtIndex(libraryIndex))) {
+									foreignSymbol.setLibraryID(selectedLibraryID);
+									foreignSymbol.setSourceLibraryName(selectedLibraryName);
+
+									changedSymbolCount++;
+								} else {
+									ignoredForeignSymbols.addObject(foreignSymbol);
+								}
+							}
 						}
 					}
 				}
 			}
-		}
 
-		context.document.showMessage(changedSymbolCount + " symbols have been swapped to new libraries, " + ignoredSymbolCount + " symbols were ignored as they weren't found in the new library");
+			if (ignoredLocalSymbols.count() == 0 && ignoredForeignSymbols.count() == 0) {
+				context.document.showMessage(changedSymbolCount + " symbols have been swapped to new libraries");
+			} else {
+				var alertText = changedSymbolCount + " symbols have been swapped to new libraries.\n\nSome symbols were ignored as they weren't found in the selected libraries. Click View Report to review the ignored symbols.",
+					alertWindow = createAlertWindow(context,"Symbol Swap Libraries",alertText);
 
-		if (!debugMode) googleAnalytics(context,"swap","library");
-	} else return false;
+				alertWindow.addButtonWithTitle("View Report");
+				alertWindow.addButtonWithTitle("Dismiss");
+
+				var responseCode = alertWindow.runModal();
+
+				if (responseCode == 1000) {
+					displayIgnoredSymbols(ignoredLocalSymbols,ignoredForeignSymbols);
+
+					if (!debugMode) googleAnalytics(context,"swap","ignored");
+				} else return false;
+			}
+
+			if (!debugMode) googleAnalytics(context,"swap","library");
+		} else return false;
+	} else {
+		displayDialog(pluginName,"There are no symbols to swap in the current document.");
+	}
 }
 
 var report = function(context) {
@@ -250,17 +313,17 @@ var donate = function(context) {
 	if (!debugMode) googleAnalytics(context,"donate","donate");
 }
 
-function createBoldLabel(text,size,frame) {
-	var label = NSTextField.alloc().initWithFrame(frame);
+function createAlertWindow(context,name,text) {
+	var alertWindow = COSAlertWindow.new();
 
-	label.setStringValue(text);
-	label.setFont(NSFont.boldSystemFontOfSize(size));
-	label.setBezeled(false);
-	label.setDrawsBackground(false);
-	label.setEditable(false);
-	label.setSelectable(false);
+	var iconPath = context.plugin.urlForResourceNamed("icon.png").path(),
+		icon = NSImage.alloc().initByReferencingFile(iconPath);
 
-	return label;
+	alertWindow.setIcon(icon);
+	alertWindow.setMessageText(name);
+	(text) ? alertWindow.setInformativeText(text) : null;
+
+	return alertWindow;
 }
 
 function createCheckbox(item,flag,frame) {
@@ -276,20 +339,11 @@ function createCheckbox(item,flag,frame) {
 	return checkbox;
 }
 
-function createDivider(frame) {
-	var divider = NSView.alloc().initWithFrame(frame);
-
-	divider.setWantsLayer(1);
-	divider.layer().setBackgroundColor(CGColorCreateGenericRGB(204/255,204/255,204/255,1.0));
-
-	return divider;
-}
-
-function createLabel(text,size,frame) {
+function createLabel(text,size,frame,bold) {
 	var label = NSTextField.alloc().initWithFrame(frame);
 
 	label.setStringValue(text);
-	label.setFont(NSFont.systemFontOfSize(size));
+	(bold && bold == 1) ? label.setFont(NSFont.boldSystemFontOfSize(size)) : label.setFont(NSFont.systemFontOfSize(size));
 	label.setBezeled(false);
 	label.setDrawsBackground(false);
 	label.setEditable(false);
@@ -303,6 +357,7 @@ function createLibrarySelect(alertWindow) {
 
 	librarySelect.removeItemAtIndex(0);
 	librarySelect.insertItemWithObjectValue_atIndex("Swap to…",0);
+	//librarySelect.insertItemWithObjectValue_atIndex("Current Document",1);
 	librarySelect.selectItemAtIndex(0);
 
 	var delegate = new MochaJSDelegate({
@@ -327,7 +382,148 @@ function createLibrarySelect(alertWindow) {
 
 	librarySelect.setDelegate(delegate.getClassInstance());
 
+	librarySelects.push(librarySelect);
+
 	return librarySelect;
+}
+
+function createListDivider(frame) {
+	var divider = NSView.alloc().initWithFrame(frame);
+
+	divider.setWantsLayer(1);
+	divider.layer().setBackgroundColor(CGColorCreateGenericRGB(204/255,204/255,204/255,1.0));
+
+	return divider;
+}
+
+function createListImage(instance,frame) {
+	var imageArea = NSButton.alloc().initWithFrame(frame);
+
+	imageArea.setTitle("");
+	imageArea.setBordered(0);
+	imageArea.setWantsLayer(1);
+	imageArea.layer().setBackgroundColor(CGColorCreateGenericRGB(248/255,248/255,248/255,1.0));
+
+	var exportRequest = MSExportRequest.exportRequestsFromExportableLayer_inRect_useIDForName_(
+		instance,
+		instance.absoluteInfluenceRect(),
+		false
+		).firstObject();
+
+	exportRequest.format = "png";
+
+	var scaleX = (frame.size.width-4*2) / exportRequest.rect().size.width;
+	var scaleY = (frame.size.height-4*2) / exportRequest.rect().size.height;
+
+	exportRequest.scale = (scaleX < scaleY) ? scaleX : scaleY;
+
+	var colorSpace = NSColorSpace.sRGBColorSpace(),
+		exporter = MSExporter.exporterForRequest_colorSpace_(exportRequest,colorSpace),
+		imageRep = exporter.bitmapImageRep(),
+		instanceImage = NSImage.alloc().init().autorelease();
+
+	instanceImage.addRepresentation(imageRep);
+
+	imageArea.setImage(instanceImage);
+
+	return imageArea;
+}
+
+function createListItem(symbol,frame) {
+	var listItem = NSView.alloc().initWithFrame(frame),
+		rightColWidth = 100,
+		leftColWidth = frame.size.width-rightColWidth,
+		leftPad = 8;
+
+	listItem.setFlipped(1);
+
+	if (symbol.class() == "MSSymbolMaster") {
+		listItem.addSubview(createListLabel("Page",NSMakeRect(leftPad,8,leftColWidth,14)));
+		listItem.addSubview(createListField(symbol.parentPage().name(),NSMakeRect(leftPad,20,leftColWidth-leftPad,18)));
+		listItem.addSubview(createListLabel("Symbol",NSMakeRect(leftPad,36,leftColWidth,14)));
+		listItem.addSubview(createListField(symbol.name(),NSMakeRect(leftPad,48,leftColWidth-leftPad,18)));
+		listItem.addSubview(createListImage(symbol,NSMakeRect(leftColWidth,0,rightColWidth,frame.size.height)));
+		listItem.addSubview(createListDivider(NSMakeRect(0,frame.size.height-1,frame.size.width,1)));
+		listItem.addSubview(createListTarget(symbol,NSMakeRect(0,0,frame.size.width,frame.size.height)));
+	} else {
+		listItem.addSubview(createListLabel("Symbol",NSMakeRect(leftPad,24,leftColWidth,14)));
+		listItem.addSubview(createListField(symbol.symbolMaster().name(),NSMakeRect(leftPad,36,leftColWidth-leftPad,18)));
+		listItem.addSubview(createListImage(symbol.symbolMaster(),NSMakeRect(leftColWidth,0,rightColWidth,frame.size.height)));
+		listItem.addSubview(createListDivider(NSMakeRect(0,frame.size.height-1,frame.size.width,1)));
+	}
+
+	return listItem;
+}
+
+function createListField(string,frame) {
+	var textField = NSTextField.alloc().initWithFrame(frame);
+
+	textField.setStringValue(string);
+	textField.setFont(NSFont.systemFontOfSize(11));
+	textField.setBezeled(0);
+	textField.setEditable(0);
+	textField.setLineBreakMode(NSLineBreakByTruncatingTail);
+
+	return textField;
+}
+
+function createListLabel(string,frame) {
+	var textLabel = NSTextField.alloc().initWithFrame(frame);
+
+	textLabel.setStringValue(string);
+	textLabel.setFont(NSFont.systemFontOfSize(9));
+	textLabel.setTextColor(NSColor.colorWithCalibratedRed_green_blue_alpha(0/255,0/255,0/255,0.4));
+	textLabel.setBezeled(0);
+	textLabel.setEditable(0);
+
+	return textLabel;
+}
+
+function createListTarget(symbol,frame) {
+	var targetArea = NSButton.alloc().initWithFrame(frame);
+
+	uiButtons.push(targetArea);
+
+	targetArea.addCursorRect_cursor(targetArea.frame(),NSCursor.pointingHandCursor());
+	targetArea.setTransparent(1);
+	targetArea.setAction("callAction:");
+	targetArea.setCOSJSTargetFunction(function(sender) {
+		deselectListItems(uiButtons);
+
+		sender.setWantsLayer(1);
+		sender.layer().setBorderWidth(2);
+		sender.layer().setBorderColor(CGColorCreateGenericRGB(0,0,1,1));
+
+		var rect = (symbol.parentArtboard()) ? symbol.parentArtboard().rect() : symbol.absoluteRect().rect();
+
+		MSDocument.currentDocument().setCurrentPage(symbol.parentPage());
+		MSDocument.currentDocument().contentDrawView().zoomToFitRect(rect);
+
+		symbol.select_byExpandingSelection(true,false);
+	});
+
+	return targetArea;
+}
+
+function createListView(symbols) {
+	uiButtons = [];
+
+	var itemHeight = 72,
+		itemWidth = panelWidth - gutterWidth,
+		listView = NSView.alloc().initWithFrame(NSMakeRect(0,0,itemWidth,itemHeight*symbols.length)),
+		count = 0;
+
+	listView.setFlipped(true);
+
+	for (var i = 0; i < symbols.length; i++) {
+		var listItem = createListItem(symbols[i],NSMakeRect(0,itemHeight*count,itemWidth,itemHeight));
+
+		listView.addSubview(listItem);
+
+		count++;
+	}
+
+	return listView;
 }
 
 function createRadioButtons(options,selected,format,x,y) {
@@ -369,6 +565,22 @@ function createRadioButtons(options,selected,format,x,y) {
 	return buttonMatrix;
 }
 
+function createSegmentedControl(items,frame) {
+	var control = NSSegmentedControl.alloc().initWithFrame(frame);
+
+	control.setSegmentCount(items.length);
+
+	items.forEach(function(item,index) {
+		control.setLabel_forSegment(item,index);
+		control.setWidth_forSegment(120,index);
+	});
+
+	control.cell().setTrackingMode(0);
+	control.setSelected_forSegment(1,0);
+
+	return control;
+}
+
 function createSelect(items,selectedItemIndex,frame) {
 	var comboBox = NSComboBox.alloc().initWithFrame(frame),
 		selectedItemIndex = (selectedItemIndex > -1) ? selectedItemIndex : 0;
@@ -381,8 +593,109 @@ function createSelect(items,selectedItemIndex,frame) {
 	return comboBox;
 }
 
-function displayDialog(message,title) {
-	NSApplication.sharedApplication().displayDialog_withTitle(message,title);
+function deselectListItems(items) {
+	for (var i = 0; i < items.length; i++) {
+		if (items[i].layer()) {
+			items[i].layer().setBorderWidth(0);
+			items[i].setWantsLayer(0);
+		}
+	}
+}
+
+function displayDialog(title,body) {
+	if (MSApplicationMetadata.metadata().appVersion >= 50) {
+		const UI = require("sketch/ui");
+
+		UI.alert(title,body);
+	} else {
+		NSApplication.sharedApplication().displayDialog_withTitle(body,title);
+	}
+}
+
+function displayIgnoredSymbols(ignoredLocalSymbols,ignoredForeignSymbols) {
+	var panel = NSPanel.alloc().init();
+
+	panel.setFrame_display(NSMakeRect(0,0,panelWidth,panelHeight),true);
+	panel.setStyleMask(NSTexturedBackgroundWindowMask | NSTitledWindowMask | NSClosableWindowMask | NSFullSizeContentViewWindowMask);
+	panel.setBackgroundColor(NSColor.controlColor());
+	panel.setLevel(NSFloatingWindowLevel);
+	panel.standardWindowButton(NSWindowMiniaturizeButton).setHidden(true);
+	panel.standardWindowButton(NSWindowZoomButton).setHidden(true);
+	panel.makeKeyAndOrderFront(null);
+	panel.center();
+	panel.title = pluginName;
+
+	COScript.currentCOScript().setShouldKeepAround_(true);
+
+	var threadDictionary = NSThread.mainThread().threadDictionary(),
+		identifier = pluginIdentifier;
+
+	if (threadDictionary[identifier]) return;
+
+	threadDictionary[identifier] = panel;
+
+	var closeButton = panel.standardWindowButton(NSWindowCloseButton);
+
+	closeButton.setCOSJSTargetFunction(function(sender) {
+		panel.close();
+		threadDictionary.removeObjectForKey(identifier);
+		COScript.currentCOScript().setShouldKeepAround_(false);
+	});
+
+	var panelContent = NSView.alloc().initWithFrame(NSMakeRect(0,0,panelWidth,panelHeight-panelTitle));
+
+	panelContent.setFlipped(1);
+
+	var panelIntro = createLabel("Ignored Symbol Report",12,NSMakeRect(8,12,panelWidth-16,16),1);
+
+	panelContent.addSubview(panelIntro);
+
+	var panelToggle = createSegmentedControl(["Local (" + ignoredLocalSymbols.length + ")","Foreign (" + ignoredForeignSymbols.length + ")"],NSMakeRect(52,38,300,24));
+
+	panelContent.addSubview(panelToggle);
+
+	var panelText = createLabel("Select a symbol below to navigate to it's location…",12,NSMakeRect(8,72,panelWidth-16,16));
+
+	panelContent.addSubview(panelText);
+
+	var panelList = NSScrollView.alloc().initWithFrame(NSMakeRect(0,102,panelWidth,384));
+
+	panelList.setHasVerticalScroller(true);
+
+	panelContent.addSubview(panelList);
+
+	var symbols = ignoredLocalSymbols;
+
+	if (!ignoredForeignSymbols.length) {
+		panelToggle.setEnabled_forSegment(0,1);
+		panelToggle.setSelected_forSegment(1,0);
+	} else if (!ignoredLocalSymbols.length) {
+		panelToggle.setEnabled_forSegment(0,0);
+		panelToggle.setSelected_forSegment(1,1);
+
+		panelText.setStringValue("Foreign symbols are not selectable, for review only…");
+
+		symbols = ignoredForeignSymbols;
+	} else {
+		panelToggle.cell().setAction("callAction:");
+		panelToggle.cell().setCOSJSTargetFunction(function(sender) {
+			symbols = (sender.indexOfSelectedItem() == 0) ? ignoredLocalSymbols : ignoredForeignSymbols;
+
+			var panelTextString = (sender.indexOfSelectedItem() == 0) ? "Select a symbol below to navigate to it's location…" : "Library symbols are unselectable, for review only…";
+
+			panelText.setStringValue(panelTextString);
+
+			var panelListContent = createListView(symbols);
+
+			panelList.setDocumentView(panelListContent);
+		});
+	}
+
+	var panelListContent = createListView(symbols);
+
+	panelList.setDocumentView(panelListContent);
+
+	panel.contentView().addSubview(panelContent);
 }
 
 function googleAnalytics(context,category,action,label,value) {
@@ -473,7 +786,7 @@ function getLibrary(context) {
 		}
 	}
 
-	librarySymbols = getLibrarySymbols(context,library);
+	librarySymbols = getLibrarySymbols(library);
 	symbolArray = (librarySymbols && librarySymbols.length) ? librarySymbols.valueForKey("name") : NSMutableArray.arrayWithArray(["No Symbols"]);
 
 	var defaultSettings = {};
@@ -483,7 +796,7 @@ function getLibrary(context) {
 
 	defaultSettings = getCachedSettings(context,context.document.documentData(),defaultSettings);
 
-	var alertWindow = newAlertWindow(context,"Symbol Swap Selections","Swap the selected symbols and/or symbol instances to another master.");
+	var alertWindow = createAlertWindow(context,"Symbol Swap Selections","Swap the selected symbols and/or symbol instances to another master.");
 
 	alertWindow.addTextLabelWithValue("Select a new symbol source...");
 
@@ -494,7 +807,7 @@ function getLibrary(context) {
 		"comboBoxSelectionDidChange:" : (function() {
 			var selectedLibrary = (symbolSource.indexOfSelectedItem() == 0) ? 0 : libraries[symbolSource.indexOfSelectedItem() - 1];
 
-			librarySymbols = getLibrarySymbols(context,selectedLibrary);
+			librarySymbols = getLibrarySymbols(selectedLibrary);
 
 			if (librarySymbols && librarySymbols.length) {
 				symbolArray = librarySymbols.valueForKey("name");
@@ -612,12 +925,12 @@ function getLibrary(context) {
 	} else return false;
 }
 
-function getLibrarySymbols(context,library) {
+function getLibrarySymbols(library) {
 	var librarySymbolSort = NSSortDescriptor.sortDescriptorWithKey_ascending("name",1),
 		librarySymbols;
 
 	if (library == 0) {
-		librarySymbols = context.document.documentData().localSymbols();
+		librarySymbols = MSDocument.currentDocument().documentData().localSymbols();
 	} else {
 		var libraryPath = library.locationOnDisk().path(),
 			libraryFile = openFile(libraryPath);
@@ -628,6 +941,21 @@ function getLibrarySymbols(context,library) {
 	}
 
 	return librarySymbols.sortedArrayUsingDescriptors([librarySymbolSort]);
+}
+
+function getForeignSymbolByName(name,library) {
+	var librarySymbols = getLibrarySymbols(library),
+		librarySymbolLoop = librarySymbols.objectEnumerator(),
+		librarySymbol,
+		foreignSymbol;
+
+	while (librarySymbol = librarySymbolLoop.nextObject()) {
+		if (!foreignSymbol && librarySymbol.name().trim() == name.trim()) {
+			foreignSymbol = librarySymbol;
+		}
+	}
+
+	return foreignSymbol;
 }
 
 function importForeignSymbol(symbol,library) {
@@ -644,19 +972,6 @@ function importForeignSymbol(symbol,library) {
 	}
 
 	return foreignSymbol;
-}
-
-function newAlertWindow(context,name,text) {
-	var alertWindow = COSAlertWindow.new();
-
-	var iconPath = context.plugin.urlForResourceNamed("icon.png").path(),
-		icon = NSImage.alloc().initByReferencingFile(iconPath);
-
-	alertWindow.setIcon(icon);
-	alertWindow.setMessageText(name);
-	alertWindow.setInformativeText(text);
-
-	return alertWindow;
 }
 
 function openFile(path) {

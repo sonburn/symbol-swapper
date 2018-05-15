@@ -6,15 +6,15 @@
 		<description>Swap the selected symbols and/or symbol instances to another master.</description>
 		<language>en</language>
 		<item>
-			<title>Version 0.10</title>
+			<title>Version 0.11</title>
 			<description>
 				<![CDATA[
 				<ul>
-				<li>Performance optimizations, bug fixes and support for Sketch 50.</li>
+				<li>Added support for migrating all symbols from current document to library, and added report for ignored symbols.</li>
 				</ul>
 				]]>
 			</description>
-			<enclosure url="https://github.com/sonburn/symbol-swapper/archive/master.zip" sparkle:version="0.10" />
+			<enclosure url="https://github.com/sonburn/symbol-swapper/archive/master.zip" sparkle:version="0.11" />
 		</item>
 	</channel>
 </rss>
