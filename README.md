@@ -42,6 +42,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.12** - Library swapping window is now scrollable.
 * **0.11** - Added support for migrating all symbols from current document to library, and added report for ignored symbols.
 * **0.10** - Performance optimizations, bug fixes and support for Sketch 50.
 * **0.9** - Fixed bug introduced in Sketch 48 as MSLayerPaster functionality was changed. Added new functionality to swap libraries individually.
