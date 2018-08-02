@@ -55,5 +55,6 @@
 	"authorEmail" : "jason.burns@synchronoss.com",
 	"name" : "Symbol Swapper",
 	"icon" : "icon.png",
-	"appcast" : "https://raw.githubusercontent.com/sonburn/symbol-swapper/master/appcast.xml"
+	"appcast" : "https://raw.githubusercontent.com/sonburn/symbol-swapper/master/appcast.xml",
+	"homepage" : "https://github.com/sonburn/symbol-swapper"
 }
