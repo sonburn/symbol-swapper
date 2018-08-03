@@ -127,6 +127,11 @@ var swapLibrary = function(context) {
 	var localSymbols = context.document.documentData().localSymbols(),
 		foreignSymbols = context.document.documentData().foreignSymbols();
 
+	var defaultSettings = {};
+	defaultSettings.librarySwapType = 1;
+
+	defaultSettings = getCachedSettings(context,context.document.documentData(),defaultSettings);
+
 	if (localSymbols.length || foreignSymbols.length) {
 		var alertWindow = createAlertWindow(context,"Symbol Swap Libraries","Swap all symbols from one source to another.");
 
@@ -222,6 +227,10 @@ var swapLibrary = function(context) {
 
 		alertWindow.addAccessoryView(libraryList);
 
+		var swapType = createRadioButtons(["Swap with symbols of same name","Swap with symbols of same ID"],defaultSettings.librarySwapType);
+
+		alertWindow.addAccessoryView(swapType);
+
 		swapButton = alertWindow.addButtonWithTitle("Swap");
 		alertWindow.addButtonWithTitle("Cancel");
 
@@ -243,6 +252,13 @@ var swapLibrary = function(context) {
 					var selectedLibrary = librarySelects[i].indexOfSelectedItem() - 1, // Shifted to account for "Swap to…"
 						selectedLibraryName = libraries[selectedLibrary].name(),
 						selectedLibraryID = libraries[selectedLibrary].libraryID();
+
+					// If user wants to swap symbols based on name...
+					if (swapType.selectedCell().tag() == 0) {
+						// Get the symbols from the library and create an array of symbol names
+						var librarySymbols = getLibrarySymbols(libraries[selectedLibrary]);
+							symbolArray = librarySymbols.valueForKey("name");
+					}
 
 					// If current document select was changed, and there are local symbols...
 					if (i == 0 && localSymbols.length) {
@@ -285,8 +301,8 @@ var swapLibrary = function(context) {
 					// If foreign library select was changed...
 					else {
 						// Library variables
-						var currentLibraryName = foreignSymbolLibraries[i - 1].name, // Shifted to account for "Swap to…"
-							currentLibraryID = foreignSymbolLibraries[i - 1].id; // Shifted to account for "Swap to…"
+						var currentLibraryName = (localSymbols.length) ? foreignSymbolLibraries[i - 1].name : foreignSymbolLibraries[i].name,
+							currentLibraryID = (localSymbols.length) ? foreignSymbolLibraries[i - 1].id : foreignSymbolLibraries[i].id;
 
 						// Create foreign symbol loop
 						var foreignSymbolLoop = foreignSymbols.objectEnumerator(),
@@ -312,22 +328,41 @@ var swapLibrary = function(context) {
 									}
 								}
 
-								// If matching symbol exists...
-								if (foreignSymbol.masterFromLibrary(libraries.objectAtIndex(libraryIndex))) {
-									// Update the symbol's library information
-									foreignSymbol.setLibraryID(selectedLibraryID);
-									foreignSymbol.setSourceLibraryName(selectedLibraryName);
+								// If user wants to swap symbols based on name...
+								if (swapType.selectedCell().tag() == 0) {
+									// If matching symbol exists...
+									if (symbolArray.containsObject(foreignSymbol.symbolMaster().name())) {
+										// Get the matched symbol from the selected library
+										var librarySymbol = librarySymbols.objectAtIndex(symbolArray.indexOfObject(foreignSymbol.symbolMaster().name()));
 
-									// Need to update the symbol instances
-									AppController.sharedInstance().checkForAssetLibraryUpdates();
+										// Update the foreign symbol
+										foreignSymbol.setLibraryID(selectedLibraryID);
+										foreignSymbol.setSourceLibraryName(selectedLibraryName);
+										foreignSymbol.originalMaster().setSymbolID(librarySymbol.symbolID());
 
-									// Iterate the changed symbol counter
-									changedSymbolCount++;
-								}
-								// If matching symbol doesn't exist...
-								else {
-									// Ignore the symbol
-									ignoredForeignSymbols.addObject(foreignSymbol);
+										// Iterate the changed symbol counter
+										changedSymbolCount++;
+									}
+									// If matching symbol doesn't exist...
+									else {
+										// Ignore the symbol
+										ignoredForeignSymbols.addObject(foreignSymbol);
+									}
+								} else {
+									// If matching symbol exists...
+									if (foreignSymbol.masterFromLibrary(libraries.objectAtIndex(libraryIndex))) {
+										// Update the foreign symbol
+										foreignSymbol.setLibraryID(selectedLibraryID);
+										foreignSymbol.setSourceLibraryName(selectedLibraryName);
+
+										// Iterate the changed symbol counter
+										changedSymbolCount++;
+									}
+									// If matching symbol doesn't exist...
+									else {
+										// Ignore the symbol
+										ignoredForeignSymbols.addObject(foreignSymbol);
+									}
 								}
 							}
 						}
@@ -335,10 +370,15 @@ var swapLibrary = function(context) {
 				}
 			}
 
+			context.command.setValue_forKey_onLayer(swapType.selectedCell().tag(),"librarySwapType",context.document.documentData());
+
+			// Check for library updates to accept
+			AppController.sharedInstance().checkForAssetLibraryUpdates();
+
 			if (ignoredLocalSymbols.count() == 0 && ignoredForeignSymbols.count() == 0) {
-				context.document.showMessage(changedSymbolCount + " symbols have been swapped to new libraries");
+				displayDialog(pluginName,changedSymbolCount + " symbols have been swapped to new libraries.\n\nYou may need to accept the library updates by clicking the Library Updates Available button in the top-right corner of Sketch.");
 			} else {
-				var alertText = changedSymbolCount + " symbols have been swapped to new libraries.\n\nSome symbols were ignored as they weren't found in the selected libraries. Click View Report to review the ignored symbols.",
+				var alertText = changedSymbolCount + " symbols have been swapped to new libraries.\n\nYou may need to accept the library updates by clicking the Library Updates Available button in the top-right corner of Sketch.\n\nSome symbols were ignored as they weren't found in the selected libraries. Click View Report to review the ignored symbols.",
 					alertWindow = createAlertWindow(context,"Symbol Swap Libraries",alertText);
 
 				alertWindow.addButtonWithTitle("View Report");
@@ -920,7 +960,7 @@ function getLibrary(context) {
 
 	symbolSource.setDelegate(newLibrarySelectDelegate.getClassInstance());
 
-	var swapType = createRadioButtons(["Swap with symbol master of same name","Swap with symbol master of same ID","Let me choose..."],0);
+	var swapType = createRadioButtons(["Swap with symbol of same name","Swap with symbol of same ID","Let me choose..."],0);
 	alertWindow.addAccessoryView(swapType);
 
 	swapType.cells().objectAtIndex(0).setAction("callAction:");
