@@ -8,7 +8,8 @@ var panelWidth = 350,
 	panelHeight = 530,
 	panelTitle = 44,
 	gutterWidth = 15,
-	uiButtons = [];
+	uiButtons = [],
+	swapButton;
 
 var librarySort = NSSortDescriptor.sortDescriptorWithKey_ascending("name",1),
 	libraries = AppController.sharedInstance().librariesController().libraries().sortedArrayUsingDescriptors([librarySort]),
@@ -220,10 +221,11 @@ var swapLibrary = function(context) {
 		libraryList.setDocumentView(libraryListContent);
 
 		alertWindow.addAccessoryView(libraryList);
-		alertWindow.addButtonWithTitle("Swap");
+
+		swapButton = alertWindow.addButtonWithTitle("Swap");
 		alertWindow.addButtonWithTitle("Cancel");
 
-		alertWindow.buttons().objectAtIndex(0).setEnabled(0);
+		swapButton.setEnabled(0);
 
 		var responseCode = alertWindow.runModal();
 
@@ -439,7 +441,7 @@ function createLibrarySelect(alertWindow,frame) {
 	var delegate = new MochaJSDelegate({
 		"comboBoxSelectionDidChange:" : (function() {
 			if (librarySelect.indexOfSelectedItem() != 0) {
-				alertWindow.buttons().objectAtIndex(0).setEnabled(1);
+				swapButton.setEnabled(1);
 			} else {
 				var nothingSelected = true;
 
@@ -450,7 +452,7 @@ function createLibrarySelect(alertWindow,frame) {
 				}
 
 				if (nothingSelected) {
-					alertWindow.buttons().objectAtIndex(0).setEnabled(0);
+					swapButton.setEnabled(0);
 				}
 			}
 		})
