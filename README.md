@@ -1,10 +1,10 @@
-![Symbol Swapper](https://raw.githubusercontent.com/sonburn/symbol-swapper/master/logo.png)
+![Symbol Swapper](https://raw.githubusercontent.com/sonburn/symbol-swapper/master/images/logo.png)
 
 Swap the selected symbols and/or symbol instances to another master, or swap entire libraries.
 
-![Symbol Swapper](https://raw.githubusercontent.com/sonburn/symbol-swapper/master/Screenshots/Symbol%20Swapper.png)
+![Symbol Swapper](https://raw.githubusercontent.com/sonburn/symbol-swapper/master/images/symbol-swapper.png)
 
-![Library Swapper](https://raw.githubusercontent.com/sonburn/symbol-swapper/master/Screenshots/Library%20Swapper.png)
+![Library Swapper](https://raw.githubusercontent.com/sonburn/symbol-swapper/master/images/library-swapper.png)
 
 <a href="http://bit.ly/SketchRunnerWebsite">
 	<img width="160" height="41" src="http://bit.ly/RunnerBadgeBlue" alt="runner-badge-blue">
@@ -15,7 +15,7 @@ Swap the selected symbols and/or symbol instances to another master, or swap ent
 </a>
 
 <a href="https://www.paypal.me/sonburn">
-	<img width="160" height="41" src="https://raw.githubusercontent.com/DWilliames/PDF-export-sketch-plugin/master/images/paypal-badge.png">
+	<img width="160" height="41" src="https://raw.githubusercontent.com/sonburn/symbol-organizer/master/images/donate.png">
 </a>
 
 # Usage
@@ -59,11 +59,11 @@ To find your plugins directory...
 
 # Contact
 
-<a class="twitter-follow-button" href="https://twitter.com/sonburn">Follow @sonburn</a>
+Find me on Twitter <a class="twitter-follow-button" href="https://twitter.com/sonburn">@sonburn</a>
 
 # Support
 
-If you find this plugin helpful, consider shouting me ☕️ via <a href="https://www.paypal.me/sonburn">PayPal</a>.
+If you find this plugin helpful, or would like to support my plugins in general, buy me ☕️ via <a href="https://www.paypal.me/sonburn">PayPal</a>.
 
 # License
 
