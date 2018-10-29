@@ -26,100 +26,104 @@ while (library = libraryLoop.nextObject()) {
 
 var swapSelected = function(context) {
 	var predicate = NSPredicate.predicateWithFormat("className == %@ || className == %@","MSSymbolMaster","MSSymbolInstance"),
-		selection = context.selection.filteredArrayUsingPredicate(predicate);
+		selections = context.selection.filteredArrayUsingPredicate(predicate);
 
-	if (selection.length) {
-		var librarySettings = getLibrary(context);
+	if (!selections.length) {
+		displayDialog(pluginName,"Please select at least one symbol master or instance.");
+		return;
+	}
 
-		if (librarySettings) {
-			var selectedLibrary = (librarySettings.selectedLibrary != 0) ? libraries[librarySettings.selectedLibrary - 1] : 0,
-				selectedMaster = librarySettings.selectedMaster,
-				selectionLoop = selection.objectEnumerator(),
-				selection,
-				symbolMaster,
-				instanceMap = {},
-				count = 0;
+	var librarySettings = getLibrary(context);
 
-			while (selection = selectionLoop.nextObject()) {
-				var proceed = false;
+	if (librarySettings) {
+		var selectedLibrary = (librarySettings.selectedLibrary != 0) ? libraries[librarySettings.selectedLibrary - 1] : 0,
+			selectedMaster = librarySettings.selectedMaster,
+			selectionMaster,
+			symbolMaster,
+			instanceMap = {},
+			instanceCount = 0;
 
-				if (selectedMaster) {
-					if (selectedLibrary != 0) {
-						symbolMaster = importForeignSymbol(selectedMaster,selectedLibrary).symbolMaster();
-					} else {
-						symbolMaster = selectedMaster;
-					}
+		selections.forEach(function(selection){
+			var proceed = false;
 
-					instanceMap[selection.symbolID().toString()] = symbolMaster.symbolID().toString();
+			selectionMaster = (selection.class() == "MSSymbolMaster") ? selection : selection.symbolMaster();
+
+			if (selectedMaster) {
+				symbolMaster = (selectedLibrary != 0) ? importForeignSymbol(selectedMaster,selectedLibrary).symbolMaster() : selectedMaster;
+
+				instanceMap[selection.symbolID()] = symbolMaster.symbolID();
+
+				proceed = true;
+			} else {
+				var selectionMasterName = selectionMaster.name();
+
+				if (symbolArray.containsObject(selectionMasterName)) {
+					var symbolIndex = symbolArray.indexOfObject(selectionMasterName);
+
+					symbolMaster = (selectedLibrary != 0) ? importForeignSymbol(librarySymbols[symbolIndex],selectedLibrary).symbolMaster() : librarySymbols[symbolIndex];
+
+					instanceMap[selection.symbolID()] = symbolMaster.symbolID();
 
 					proceed = true;
-				} else {
-					var symbolName = (selection.class() == "MSSymbolMaster") ? selection.name() : selection.symbolMaster().name();
-
-					if (symbolArray.containsObject(symbolName)) {
-						var symbolIndex = symbolArray.indexOfObject(symbolName);
-
-						if (selectedLibrary != 0) {
-							symbolMaster = importForeignSymbol(librarySymbols[symbolIndex],selectedLibrary).symbolMaster();
-						} else {
-							symbolMaster = librarySymbols[symbolIndex];
-						}
-
-						instanceMap[selection.symbolID().toString()] = symbolMaster.symbolID().toString();
-
-						proceed = true;
-					}
 				}
+			}
 
-				if (proceed) {
-					if (selection.class() == "MSSymbolMaster") {
-						var instances = selection.allInstances();
+			if (proceed) {
+				if (selection.class() == "MSSymbolMaster") {
+					var instances = selection.allInstances();
 
-						for (var i = 0; i < instances.length; i++) {
-							instances[i].changeInstanceToSymbol(symbolMaster);
-
-							if (librarySettings.renameInstances == 1) {
-								instances[i].setName(symbolMaster.name());
-							}
-
-							count++;
-						}
-
-						if (librarySettings.deleteMasters == 1) {
-							selection.removeFromParent();
-						}
-					} else {
-						selection.changeInstanceToSymbol(symbolMaster);
+					instances.forEach(function(instance){
+						instance.changeInstanceToSymbol(symbolMaster);
 
 						if (librarySettings.renameInstances == 1) {
-							selection.setName(symbolMaster.name());
+							instance.setName(symbolMaster.name());
 						}
 
-						count++;
+						instanceCount++;
+					});
+
+					if (librarySettings.deleteMasters == 1) {
+						selection.removeFromParent();
 					}
+				} else {
+					selection.changeInstanceToSymbol(symbolMaster);
+
+					if (librarySettings.renameInstances == 1) {
+						selection.setName(symbolMaster.name());
+					}
+
+					instanceCount++;
 				}
 			}
+		});
 
-			if (librarySettings.includeSiblings == 1 && Object.keys(instanceMap).length > 0) {
-				var allInstances = getInstances(context);
+		if (librarySettings.includeSiblings == 1) {
+			var symbolInstances = selectionMaster.allInstances();
 
-				for (var i = 0; i < allInstances.length; i++) {
-					if (!MSLayerPaster.updateOverridesOnInstance_withIDMap_) {
-						allInstances[i].updateOverridesWithObjectIDMap(instanceMap);
+			symbolInstances.forEach(function(instance){
+				instance.changeInstanceToSymbol(symbolMaster);
+
+				if (librarySettings.renameInstances == 1) {
+					instance.setName(symbolMaster.name());
+				}
+			});
+
+			if (Object.keys(instanceMap).length > 0) {
+				getAllDocumentInstances(context).forEach(function(instance){
+					if (MSLayerPaster.updateOverridesOnInstance_withIDMap_) {
+						MSLayerPaster.updateOverridesOnInstance_withIDMap_(instance,instanceMap);
 					} else {
-						MSLayerPaster.updateOverridesOnInstance_withIDMap_(allInstances[i],instanceMap);
+						instance.updateOverridesWithObjectIDMap(instanceMap);
 					}
-				}
+				});
 			}
-
-			context.document.reloadInspector();
-
-			var libraryName = (selectedLibrary == 0) ? "current document" : selectedLibrary.name() + " library";
-
-			context.document.showMessage(count + " symbol instance(s) have been swapped to the " + libraryName);
 		}
-	} else {
-		displayDialog(pluginName,"Please select at least one symbol master or instance.");
+
+		context.document.reloadInspector();
+
+		var libraryName = (selectedLibrary == 0) ? "current document" : selectedLibrary.name() + " library";
+
+		context.document.showMessage(instanceCount + " symbol instance(s) have been swapped to the " + libraryName);
 	}
 }
 
@@ -881,17 +885,15 @@ function getCachedSettings(context,location,settings) {
 	}
 }
 
-function getInstances(context) {
-	var instanceArray = NSArray.array(),
-		predicate = NSPredicate.predicateWithFormat("className == %@","MSSymbolInstance"),
-		pageLoop = context.document.pages().objectEnumerator(),
-		page;
+function getAllDocumentInstances() {
+	var instanceArray = NSArray.array();
+	var predicate = NSPredicate.predicateWithFormat("className == %@","MSSymbolInstance");
 
-	while (page = pageLoop.nextObject()) {
+	MSDocument.currentDocument().pages().forEach(function(page){
 		var pageInstances = page.children().filteredArrayUsingPredicate(predicate);
 
 		instanceArray = instanceArray.arrayByAddingObjectsFromArray(pageInstances);
-	}
+	});
 
 	return instanceArray;
 }

@@ -50,7 +50,7 @@
 		]
 	},
 	"identifier" : "com.sonburn.sketchplugins.symbol-swapper",
-	"version" : "0.14",
+	"version" : "0.15",
 	"description" : "Swap the selected symbols and/or symbol instances to another master, or swap entire libraries.",
 	"authorEmail" : "jason.burns@synchronoss.com",
 	"name" : "Symbol Swapper",

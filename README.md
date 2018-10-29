@@ -42,6 +42,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.15** - Fix for non-override instances of symbols not retaining their overrides.
 * **0.14** - Added ability to swap libraries using symbol names instead of IDs.
 * **0.13** - Fix for "alertWindow.buttons is not a function" issue introduced in last update.
 * **0.12** - Library swapping window is now scrollable.
