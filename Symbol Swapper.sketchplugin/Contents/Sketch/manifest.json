@@ -1,5 +1,12 @@
 {
+	"name" : "Symbol Swapper",
+	"description" : "Swap the selected symbols and/or symbol instances to another master, or swap entire libraries.",
 	"author" : "Jason Burns",
+	"homepage" : "https://github.com/sonburn/symbol-swapper",
+	"version" : "0.16",
+	"identifier" : "com.sonburn.sketchplugins.symbol-swapper",
+	"appcast" : "https://raw.githubusercontent.com/sonburn/symbol-swapper/master/appcast.xml",
+	"icon" : "icon.png",
 	"commands" : [
 		{
 			"name" : "Symbol Swap Selections",
@@ -46,13 +53,5 @@
 			"plugins",
 			"donate"
 		]
-	},
-	"identifier" : "com.sonburn.sketchplugins.symbol-swapper",
-	"version" : "0.15",
-	"description" : "Swap the selected symbols and/or symbol instances to another master, or swap entire libraries.",
-	"authorEmail" : "jason.burns@synchronoss.com",
-	"name" : "Symbol Swapper",
-	"icon" : "icon.png",
-	"appcast" : "https://raw.githubusercontent.com/sonburn/symbol-swapper/master/appcast.xml",
-	"homepage" : "https://github.com/sonburn/symbol-swapper"
+	}
 }
