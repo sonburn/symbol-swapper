@@ -42,6 +42,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.16** - Fix for Swap Libraries not working if no local symbols.
 * **0.15** - Fix for non-override instances of symbols not retaining their overrides.
 * **0.14** - Added ability to swap libraries using symbol names instead of IDs.
 * **0.13** - Fix for "alertWindow.buttons is not a function" issue introduced in last update.
@@ -68,4 +69,4 @@ If you find this plugin helpful, or would like to support my plugins in general,
 
 # License
 
-Copyright (c) 2018 Jason Burns (Sonburn). See LICENSE.md for further details.
+Copyright (c) 2019 Jason Burns (Sonburn). See LICENSE.md for further details.

@@ -6,15 +6,15 @@
 		<description>Swap the selected symbols and/or symbol instances to another master.</description>
 		<language>en</language>
 		<item>
-			<title>Version 0.15</title>
+			<title>Version 0.16</title>
 			<description>
 				<![CDATA[
 				<ul>
-				<li>Fix for non-override instances of symbols not retaining their overrides.</li>
+				<li>Fix for Swap Libraries not working if no local symbols.</li>
 				</ul>
 				]]>
 			</description>
-			<enclosure url="https://github.com/sonburn/symbol-swapper/archive/master.zip" sparkle:version="0.15" />
+			<enclosure url="https://github.com/sonburn/symbol-swapper/archive/master.zip" sparkle:version="0.16" />
 		</item>
 	</channel>
 </rss>

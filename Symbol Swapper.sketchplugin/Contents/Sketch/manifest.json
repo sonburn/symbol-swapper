@@ -6,8 +6,7 @@
 			"shortcut" : "cmd option shift w",
 			"identifier" : "swapSelected",
 			"description" : "Swap the selected symbols and/or symbol instances to another master.",
-			"script" : "script.cocoascript",
-			"icon" : "icon-sr.png",
+			"script" : "script.js",
 			"handler" : "swapSelected"
 		},
 		{
@@ -15,26 +14,25 @@
 			"shortcut" : "cmd option shift b",
 			"identifier" : "swapLibrary",
 			"description" : "Swap all symbols from one library to another.",
-			"script" : "script.cocoascript",
-			"icon" : "icon-sr.png",
+			"script" : "script.js",
 			"handler" : "swapLibrary"
 		},
 		{
 			"name": "Report Issue",
 			"identifier": "report",
-			"script" : "script.cocoascript",
+			"script" : "script.js",
 			"handler": "report"
 		},
 		{
 			"name": "Other Plugins",
 			"identifier": "plugins",
-			"script" : "script.cocoascript",
+			"script" : "script.js",
 			"handler": "plugins"
 		},
 		{
 			"name": "Donate",
 			"identifier": "donate",
-			"script" : "script.cocoascript",
+			"script" : "script.js",
 			"handler": "donate"
 		}
 	],
