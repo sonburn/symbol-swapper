@@ -13,6 +13,7 @@
 			"shortcut" : "cmd option shift w",
 			"identifier" : "swapSelected",
 			"description" : "Swap the selected symbols and/or symbol instances to another master.",
+			"icon" : "icon.png",
 			"script" : "script.js",
 			"handler" : "swapSelected"
 		},
@@ -21,26 +22,33 @@
 			"shortcut" : "cmd option shift b",
 			"identifier" : "swapLibrary",
 			"description" : "Swap all symbols from one library to another.",
+			"icon" : "icon.png",
 			"script" : "script.js",
 			"handler" : "swapLibrary"
 		},
 		{
-			"name": "Report Issue",
-			"identifier": "report",
+			"name" : "Report Issue",
+			"identifier" : "report",
+			"description" : "Report an issue with Symbol Swapper.",
+			"icon" : "icon.png",
 			"script" : "script.js",
-			"handler": "report"
+			"handler" : "report"
 		},
 		{
-			"name": "Other Plugins",
-			"identifier": "plugins",
+			"name" : "Other Plugins",
+			"identifier" : "plugins",
+			"description" : "View all of Sonburn's plugins.",
+			"icon" : "icon.png",
 			"script" : "script.js",
-			"handler": "plugins"
+			"handler" : "plugins"
 		},
 		{
-			"name": "Donate",
-			"identifier": "donate",
+			"name" : "Donate",
+			"identifier" : "donate",
+			"description" : "Donate to the development of Symbol Swapper.",
+			"icon" : "icon.png",
 			"script" : "script.js",
-			"handler": "donate"
+			"handler" : "donate"
 		}
 	],
 	"menu" : {
