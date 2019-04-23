@@ -133,6 +133,11 @@ var swapLibrary = function(context) {
 	const localSymbols = context.document.documentData().localSymbols();
 	const foreignSymbols = context.document.documentData().foreignSymbols();
 
+	if (debugMode) {
+		log('There are ' + localSymbols.length + ' local symbols');
+		log('There are ' + foreignSymbols.length + ' foreign symbols');
+	}
+
 	var defaultSettings = {};
 	defaultSettings.librarySwapType = 1;
 
@@ -187,9 +192,20 @@ var swapLibrary = function(context) {
 			}
 		});
 
-		var foreignSymbolLibrarySort = NSSortDescriptor.sortDescriptorWithKey_ascending('name',1);
+		if (debugMode) {
+			log('Foreign libraries in use, pre sort…');
+			log(foreignSymbolLibraries);
+		}
 
-		foreignSymbolLibraries.sortedArrayUsingDescriptors([foreignSymbolLibrarySort]).forEach(function(foreignSymbolLibrary){
+		var foreignSymbolLibrarySort = NSSortDescriptor.sortDescriptorWithKey_ascending('name',1);
+		foreignSymbolLibraries = foreignSymbolLibraries.sortedArrayUsingDescriptors([foreignSymbolLibrarySort]);
+
+		if (debugMode) {
+			log('Foreign libraries in use, post sort…');
+			log(foreignSymbolLibraries);
+		}
+
+		foreignSymbolLibraries.forEach(function(foreignSymbolLibrary){
 			var thisLibraryName = foreignSymbolLibrary.name;
 			var thisLibraryID = foreignSymbolLibrary.id;
 			var thisLibraryCount = 0;
@@ -248,11 +264,11 @@ var swapLibrary = function(context) {
 		var ignoredForeignSymbols = NSMutableArray.array();
 
 		// Iterate through each library select...
-		for (i = 0; i < librarySelects.length; i++) {
+		librarySelects.forEach(function(librarySelect,i){
 			// If a new library was selected...
-			if (librarySelects[i].indexOfSelectedItem() != 0) {
+			if (librarySelect.indexOfSelectedItem() != 0) {
 				// Library variables
-				var selectedLibrary = librarySelects[i].indexOfSelectedItem() - 1; // Shifted to account for 'Swap to…'
+				var selectedLibrary = librarySelect.indexOfSelectedItem() - 1; // Shifted to account for 'Swap to…'
 				var selectedLibraryName = libraries[selectedLibrary].name();
 				var selectedLibraryID = libraries[selectedLibrary].libraryID();
 
@@ -299,12 +315,8 @@ var swapLibrary = function(context) {
 					var currentLibraryName = (localSymbols.length) ? foreignSymbolLibraries[i - 1].name : foreignSymbolLibraries[i].name,
 						currentLibraryID = (localSymbols.length) ? foreignSymbolLibraries[i - 1].id : foreignSymbolLibraries[i].id;
 
-					// Create foreign symbol loop
-					var foreignSymbolLoop = foreignSymbols.objectEnumerator(),
-						foreignSymbol;
-
 					// Iterate through foreign symbols
-					while (foreignSymbol = foreignSymbolLoop.nextObject()) {
+					foreignSymbols.forEach(function(foreignSymbol){
 						// Foreign library variables
 						var foreignSymbolLibraryName = String(foreignSymbol.sourceLibraryName()),
 							foreignSymbolLibraryID = String(foreignSymbol.libraryID());
@@ -360,10 +372,10 @@ var swapLibrary = function(context) {
 								}
 							}
 						}
-					}
+					});
 				}
 			}
-		}
+		});
 
 		context.command.setValue_forKey_onLayer(swapType.selectedCell().tag(),'librarySwapType',context.document.documentData());
 

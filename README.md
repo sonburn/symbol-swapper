@@ -42,6 +42,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.17** - Fix for Swap Libraries not working after last update.
 * **0.16** - Fix for Swap Libraries not working if no local symbols.
 * **0.15** - Fix for non-override instances of symbols not retaining their overrides.
 * **0.14** - Added ability to swap libraries using symbol names instead of IDs.
