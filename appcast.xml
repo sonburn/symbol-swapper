@@ -6,15 +6,15 @@
 		<description>Swap the selected symbols and/or symbol instances to another master.</description>
 		<language>en</language>
 		<item>
-			<title>Version 0.17</title>
+			<title>Version 0.18</title>
 			<description>
 				<![CDATA[
 				<ul>
-				<li>Fix for Swap Libraries not working after last update.</li>
+				<li>Fix for Sketch 58: plugin window closing when selecting library.</li>
 				</ul>
 				]]>
 			</description>
-			<enclosure url="https://github.com/sonburn/symbol-swapper/archive/master.zip" sparkle:version="0.17" />
+			<enclosure url="https://github.com/sonburn/symbol-swapper/archive/master.zip" sparkle:version="0.18" />
 		</item>
 	</channel>
 </rss>

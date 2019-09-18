@@ -470,7 +470,7 @@ function createLabel(text,size,frame,bold) {
 	label.setBezeled(false);
 	label.setDrawsBackground(false);
 	label.setEditable(false);
-	label.setSelectable(false);
+	label.setSelectable(true);
 
 	return label;
 }
@@ -1051,7 +1051,7 @@ function getLibrarySymbols(library) {
 	if (library == 0) {
 		librarySymbols = MSDocument.currentDocument().documentData().localSymbols();
 	} else {
-		var libraryPath = library.locationOnDisk().path(),
+		var libraryPath = NSURL.fileURLWithPath(library.locationOnDisk().path()),
 			libraryFile = openFile(libraryPath);
 
 		librarySymbols = (libraryFile) ? libraryFile.documentData().allSymbols() : nil;
