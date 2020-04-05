@@ -4,7 +4,7 @@ const sketch = require('sketch');
 
 var pluginName = 'Symbol Swapper';
 var pluginIdentifier = 'com.sonburn.sketchplugins.symbol-swapper';
-var debugMode = true;
+var debugMode = false;
 
 var panelWidth = 350;
 var panelHeight = 530;
