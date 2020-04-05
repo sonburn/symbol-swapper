@@ -42,6 +42,8 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.20** - Improved select boxes when swapping instances, fixed broken check for updates after library swapping.
+* **0.19** - Improved layout of library swapping window, added function to create inventory of a library.
 * **0.18** - Fix for Sketch 58: plugin window closing when selecting library.
 * **0.17** - Fix for Swap Libraries not working after last update.
 * **0.16** - Fix for Swap Libraries not working if no local symbols.

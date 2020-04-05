@@ -171,7 +171,7 @@ var swapLibrary = function(context) {
 		libraryTitleText.setToolTip(thisLibraryID);
 
 		var libraryCountText = createLabel(thisLibraryCount + ' symbols',12,NSMakeRect(libraryListItemPadding,32,300,16));
-		var librarySelect = createLibrarySelect(libraryListItem,NSMakeRect(libraryListItemPadding,54,110,27));
+		var librarySelect = createLibrarySelect(libraryListItem,NSMakeRect(libraryListItemPadding,54,110,28));
 		var libraryButton = createButton('Create Inventory Page',NSMakeRect(libraryListItemPadding+110,56,154,24));
 
 		libraryButton.setCOSJSTargetFunction(function() {
@@ -239,7 +239,7 @@ var swapLibrary = function(context) {
 			libraryTitleText.setToolTip(thisLibraryID);
 
 			var libraryCountText = createLabel(thisLibraryCount + ' symbols',12,NSMakeRect(libraryListItemPadding,32,300,16));
-			var librarySelect = createLibrarySelect(alertWindow,NSMakeRect(libraryListItemPadding,54,110,27));
+			var librarySelect = createLibrarySelect(alertWindow,NSMakeRect(libraryListItemPadding,54,110,28));
 			var libraryButton = createButton('Create Inventory Page',NSMakeRect(libraryListItemPadding+110,56,154,24));
 
 			libraryButton.setCOSJSTargetFunction(function() {
@@ -337,8 +337,8 @@ var swapLibrary = function(context) {
 					// Iterate through foreign symbols
 					foreignSymbols.forEach(function(foreignSymbol){
 						// Foreign library variables
-						var foreignSymbolLibraryName = String(foreignSymbol.sourceLibraryName()),
-							foreignSymbolLibraryID = String(foreignSymbol.libraryID());
+						var foreignSymbolLibraryName = String(foreignSymbol.sourceLibraryName());
+						var foreignSymbolLibraryID = String(foreignSymbol.libraryID());
 
 						// If the foreign symbol's library name & ID match the selected library...
 						if (foreignSymbolLibraryName == currentLibraryName && foreignSymbolLibraryID == currentLibraryID) {
@@ -399,7 +399,11 @@ var swapLibrary = function(context) {
 		context.command.setValue_forKey_onLayer(swapType.selectedCell().tag(),'librarySwapType',context.document.documentData());
 
 		// Check for library updates to accept
-		AppController.sharedInstance().checkForAssetLibraryUpdates();
+		if (sketch.version.sketch > 59) {
+			AppController.sharedInstance().librariesController().checkForRemoteAssetLibraryUpdates();
+		} else {
+			AppController.sharedInstance().checkForAssetLibraryUpdates();
+		}
 
 		if (ignoredLocalSymbols.count() == 0 && ignoredForeignSymbols.count() == 0) {
 			sketch.UI.alert(pluginName,changedSymbolCount + ' symbols have been swapped to new libraries.\n\nYou may need to accept the library updates by clicking the Library Updates Available button in the top-right corner of Sketch.');
@@ -444,8 +448,8 @@ var donate = function(context) {
 function createAlertWindow(context,name,text) {
 	var alertWindow = COSAlertWindow.new();
 
-	var iconPath = context.plugin.urlForResourceNamed('icon.png').path(),
-		icon = NSImage.alloc().initByReferencingFile(iconPath);
+	var iconPath = context.plugin.urlForResourceNamed('icon.png').path();
+	var icon = NSImage.alloc().initByReferencingFile(iconPath);
 
 	alertWindow.setIcon(icon);
 	alertWindow.setMessageText(name);
@@ -466,8 +470,8 @@ function createButton(label,frame) {
 }
 
 function createCheckbox(item,flag,frame) {
-	var checkbox = NSButton.alloc().initWithFrame(frame),
-		flag = (flag == false) ? NSOffState : NSOnState;
+	var checkbox = NSButton.alloc().initWithFrame(frame);
+	var flag = (flag == false) ? NSOffState : NSOnState;
 
 	checkbox.setButtonType(NSSwitchButton);
 	checkbox.setBezelStyle(0);
@@ -567,11 +571,11 @@ function createRedLabel(text,size,frame,bold) {
 }
 
 function createLibrarySelect(alertWindow,frame) {
-	var librarySelect = createAlertPopupButton(libraryNames,0,frame);
+	var librarySelect = createSelect(libraryNames,0,frame);
 
 	librarySelect.removeItemAtIndex(0);
 	librarySelect.insertItemWithTitle_atIndex('Swap to…',0);
-	//librarySelect.insertItemWithObjectValue_atIndex('Current Document',1);
+	//librarySelect.insertItemWithTitle_atIndex('Current Document',1);
 	librarySelect.selectItemAtIndex(0);
 
 	librarySelect.setCOSJSTargetFunction(function() {
@@ -627,10 +631,10 @@ function createListImage(instance,frame) {
 
 	exportRequest.scale = (scaleX < scaleY) ? scaleX : scaleY;
 
-	var colorSpace = NSColorSpace.sRGBColorSpace(),
-		exporter = MSExporter.exporterForRequest_colorSpace_(exportRequest,colorSpace),
-		imageRep = exporter.bitmapImageRep(),
-		instanceImage = NSImage.alloc().init().autorelease();
+	var colorSpace = NSColorSpace.sRGBColorSpace();
+	var exporter = MSExporter.exporterForRequest_colorSpace_(exportRequest,colorSpace);
+	var imageRep = exporter.bitmapImageRep();
+	var instanceImage = NSImage.alloc().init().autorelease();
 
 	instanceImage.addRepresentation(imageRep);
 
@@ -640,10 +644,10 @@ function createListImage(instance,frame) {
 }
 
 function createListItem(symbol,frame) {
-	var listItem = NSView.alloc().initWithFrame(frame),
-		rightColWidth = 100,
-		leftColWidth = frame.size.width-rightColWidth,
-		leftPad = 8;
+	var listItem = NSView.alloc().initWithFrame(frame);
+	var rightColWidth = 100;
+	var leftColWidth = frame.size.width-rightColWidth;
+	var leftPad = 8;
 
 	listItem.setFlipped(1);
 
@@ -697,7 +701,7 @@ function createListTarget(symbol,frame) {
 	targetArea.addCursorRect_cursor(targetArea.frame(),NSCursor.pointingHandCursor());
 	targetArea.setTransparent(1);
 	targetArea.setAction('callAction:');
-	targetArea.setCOSJSTargetFunction(function(sender) {
+	targetArea.setCOSJSTargetFunction(sender => {
 		deselectListItems(uiButtons);
 
 		sender.setWantsLayer(1);
@@ -718,10 +722,10 @@ function createListTarget(symbol,frame) {
 function createListView(symbols) {
 	uiButtons = [];
 
-	var itemHeight = 72,
-		itemWidth = panelWidth - gutterWidth,
-		listView = NSView.alloc().initWithFrame(NSMakeRect(0,0,itemWidth,itemHeight*symbols.length)),
-		count = 0;
+	var itemHeight = 72;
+	var itemWidth = panelWidth - gutterWidth;
+	var listView = NSView.alloc().initWithFrame(NSMakeRect(0,0,itemWidth,itemHeight*symbols.length));
+	var count = 0;
 
 	listView.setFlipped(true);
 
@@ -737,12 +741,12 @@ function createListView(symbols) {
 }
 
 function createRadioButtons(options,selected,format,x,y) {
-	var rows = options.length,
-		columns = 1,
-		buttonMatrixWidth = 300,
-		buttonCellWidth = buttonMatrixWidth,
-		x = (x) ? x : 0,
-		y = (y) ? y : 0;
+	var rows = options.length;
+	var columns = 1;
+	var buttonMatrixWidth = 300;
+	var buttonCellWidth = buttonMatrixWidth;
+	var x = (x) ? x : 0;
+	var y = (y) ? y : 0;
 
 	if (format && format != 0) {
 		rows = options.length / 2;
@@ -791,7 +795,7 @@ function createSegmentedControl(items,frame) {
 	return control;
 }
 
-function createAlertPopupButton(items,index,frame) {
+function createSelect(items,index,frame) {
 	var select = NSPopUpButton.alloc().initWithFrame(frame);
 
 	select.addItemsWithTitles(items);
@@ -799,18 +803,6 @@ function createAlertPopupButton(items,index,frame) {
 	select.setFont(NSFont.systemFontOfSize(12));
 
 	return select;
-}
-
-function createSelect(items,selectedItemIndex,frame) {
-	var comboBox = NSComboBox.alloc().initWithFrame(frame),
-		selectedItemIndex = (selectedItemIndex > -1) ? selectedItemIndex : 0;
-
-	comboBox.addItemsWithObjectValues(items);
-	comboBox.selectItemAtIndex(selectedItemIndex);
-	comboBox.setNumberOfVisibleItems(16);
-	comboBox.setCompletes(1);
-
-	return comboBox;
 }
 
 function createScrollView(frame) {
@@ -845,8 +837,8 @@ function displayIgnoredSymbols(ignoredLocalSymbols,ignoredForeignSymbols) {
 
 	COScript.currentCOScript().setShouldKeepAround_(true);
 
-	var threadDictionary = NSThread.mainThread().threadDictionary(),
-		identifier = pluginIdentifier;
+	var threadDictionary = NSThread.mainThread().threadDictionary();
+	var identifier = pluginIdentifier;
 
 	if (threadDictionary[identifier]) return;
 
@@ -854,7 +846,7 @@ function displayIgnoredSymbols(ignoredLocalSymbols,ignoredForeignSymbols) {
 
 	var closeButton = panel.standardWindowButton(NSWindowCloseButton);
 
-	closeButton.setCOSJSTargetFunction(function(sender) {
+	closeButton.setCOSJSTargetFunction(function() {
 		panel.close();
 		threadDictionary.removeObjectForKey(identifier);
 		COScript.currentCOScript().setShouldKeepAround_(false);
@@ -896,7 +888,7 @@ function displayIgnoredSymbols(ignoredLocalSymbols,ignoredForeignSymbols) {
 		symbols = ignoredForeignSymbols;
 	} else {
 		panelToggle.cell().setAction('callAction:');
-		panelToggle.cell().setCOSJSTargetFunction(function(sender) {
+		panelToggle.cell().setCOSJSTargetFunction(sender => {
 			symbols = (sender.indexOfSelectedItem() == 0) ? ignoredLocalSymbols : ignoredForeignSymbols;
 
 			var panelTextString = (sender.indexOfSelectedItem() == 0) ? 'Select a symbol below to navigate to it\'s location…' : 'Library symbols are unselectable, for review only…';
@@ -917,9 +909,9 @@ function displayIgnoredSymbols(ignoredLocalSymbols,ignoredForeignSymbols) {
 }
 
 function googleAnalytics(context,category,action,label,value) {
-	var trackingID = 'UA-118995931-1',
-		uuidKey = 'google.analytics.uuid',
-		uuid = NSUserDefaults.standardUserDefaults().objectForKey(uuidKey);
+	var trackingID = 'UA-118995931-1';
+	var uuidKey = 'google.analytics.uuid';
+	var uuid = NSUserDefaults.standardUserDefaults().objectForKey(uuidKey);
 
 	if (!uuid) {
 		uuid = NSUUID.UUID().UUIDString();
@@ -954,8 +946,8 @@ function googleAnalytics(context,category,action,label,value) {
 		url += '&ev=' + encodeURI(value);
 	}
 
-	var session = NSURLSession.sharedSession(),
-		task = session.dataTaskWithURL(NSURL.URLWithString(NSString.stringWithString(url)));
+	var session = NSURLSession.sharedSession();
+	var task = session.dataTaskWithURL(NSURL.URLWithString(NSString.stringWithString(url)));
 
 	task.resume();
 }
@@ -987,14 +979,14 @@ function getAllDocumentInstances() {
 }
 
 function getLibrary(context) {
-	var lastLibrary = context.command.valueForKey_onLayer('lastLibrary',context.document.documentData()),
-		library = 0,
-		selectLibrary = 0,
-		selectSymbol = 0;
+	var lastLibrary = context.command.valueForKey_onLayer('lastLibrary',context.document.documentData());
+	var library = 0;
+	var selectLibrary = 0;
+	var selectSymbol = 0;
 
 	if (lastLibrary && lastLibrary != 0) {
-		var predicate = NSPredicate.predicateWithFormat('name == %@',lastLibrary),
-			libraryMatch = libraries.filteredArrayUsingPredicate(predicate).firstObject();
+		var predicate = NSPredicate.predicateWithFormat('name == %@',lastLibrary);
+		var libraryMatch = libraries.filteredArrayUsingPredicate(predicate).firstObject();
 
 		if (libraryMatch) {
 			library = libraryMatch;
@@ -1019,42 +1011,38 @@ function getLibrary(context) {
 	var symbolSource = createSelect(libraryNames,selectLibrary,NSMakeRect(0,0,300,28));
 	alertWindow.addAccessoryView(symbolSource);
 
-	var newLibrarySelectDelegate = new MochaJSDelegate({
-		"comboBoxSelectionDidChange:" : (function() {
-			var selectedLibrary = (symbolSource.indexOfSelectedItem() == 0) ? 0 : libraries[symbolSource.indexOfSelectedItem() - 1];
+	symbolSource.setCOSJSTargetFunction(function() {
+		var selectedLibrary = (symbolSource.indexOfSelectedItem() == 0) ? 0 : libraries[symbolSource.indexOfSelectedItem() - 1];
 
-			librarySymbols = getLibrarySymbols(selectedLibrary);
+		librarySymbols = getLibrarySymbols(selectedLibrary);
 
-			if (librarySymbols && librarySymbols.length) {
-				symbolArray = librarySymbols.valueForKey('name');
-				swapButton.setEnabled(1);
+		if (librarySymbols && librarySymbols.length) {
+			symbolArray = librarySymbols.valueForKey('name');
+			swapButton.setEnabled(1);
+		} else {
+			symbolArray = NSMutableArray.arrayWithArray(['No Symbols']);
+			swapButton.setEnabled(0);
+		}
+
+		symbolMaster.removeAllItems();
+		symbolMaster.addItemsWithTitles(symbolArray);
+
+		if (context.selection.length == 1) {
+			var symbolName = (context.selection[0].class() == 'MSSymbolMaster') ? context.selection[0].name() : context.selection[0].symbolMaster().name();
+
+			if (symbolArray.containsObject(symbolName)) {
+				symbolMaster.selectItemAtIndex(symbolArray.indexOfObject(symbolName));
 			} else {
-				symbolArray = NSMutableArray.arrayWithArray(['No Symbols']);
-				swapButton.setEnabled(0);
+				symbolMaster.selectItemAtIndex(0);
 			}
-
-			symbolMaster.removeAllItems();
-			symbolMaster.addItemsWithObjectValues(symbolArray);
-
-			if (context.selection.length == 1) {
-				var symbolName = (context.selection[0].class() == 'MSSymbolMaster') ? context.selection[0].name() : context.selection[0].symbolMaster().name();
-
-				if (symbolArray.containsObject(symbolName)) {
-					symbolMaster.selectItemAtIndex(symbolArray.indexOfObject(symbolName));
-				} else {
-					symbolMaster.selectItemAtIndex(0);
-				}
-			}
-		})
+		}
 	});
-
-	symbolSource.setDelegate(newLibrarySelectDelegate.getClassInstance());
 
 	var swapType = createRadioButtons(['Swap with symbol of same name','Swap with symbol of same ID','Let me choose...'],0);
 	alertWindow.addAccessoryView(swapType);
 
 	swapType.cells().objectAtIndex(0).setAction('callAction:');
-	swapType.cells().objectAtIndex(0).setCOSJSTargetFunction(function(sender) {
+	swapType.cells().objectAtIndex(0).setCOSJSTargetFunction(function() {
 		if (context.selection.length == 1) {
 			var symbolName = (context.selection[0].class() == 'MSSymbolMaster') ? context.selection[0].name() : context.selection[0].symbolMaster().name();
 
@@ -1069,7 +1057,7 @@ function getLibrary(context) {
 	});
 
 	swapType.cells().objectAtIndex(1).setAction('callAction:');
-	swapType.cells().objectAtIndex(1).setCOSJSTargetFunction(function(sender) {
+	swapType.cells().objectAtIndex(1).setCOSJSTargetFunction(function() {
 		if (context.selection.length == 1) {
 			var symbolID = (context.selection[0].class() == 'MSSymbolMaster') ? context.selection[0].symbolID() : context.selection[0].symbolMaster().symbolID();
 
@@ -1084,7 +1072,7 @@ function getLibrary(context) {
 	});
 
 	swapType.cells().objectAtIndex(2).setAction('callAction:');
-	swapType.cells().objectAtIndex(2).setCOSJSTargetFunction(function(sender) {
+	swapType.cells().objectAtIndex(2).setCOSJSTargetFunction(function() {
 		symbolMaster.setEnabled(1);
 	});
 
@@ -1142,14 +1130,14 @@ function getLibrary(context) {
 }
 
 function getLibrarySymbols(library) {
-	var librarySymbolSort = NSSortDescriptor.sortDescriptorWithKey_ascending('name',1),
-		librarySymbols;
+	var librarySymbolSort = NSSortDescriptor.sortDescriptorWithKey_ascending('name',1);
+	var librarySymbols;
 
 	if (library == 0) {
 		librarySymbols = MSDocument.currentDocument().documentData().localSymbols();
 	} else {
-		var libraryPath = NSURL.fileURLWithPath(library.locationOnDisk().path()),
-			libraryFile = openFile(libraryPath);
+		var libraryPath = NSURL.fileURLWithPath(library.locationOnDisk().path());
+		var libraryFile = openFile(libraryPath);
 
 		librarySymbols = (libraryFile) ? libraryFile.documentData().allSymbols() : nil;
 
@@ -1160,10 +1148,10 @@ function getLibrarySymbols(library) {
 }
 
 function getForeignSymbolByName(name,library) {
-	var librarySymbols = getLibrarySymbols(library),
-		librarySymbolLoop = librarySymbols.objectEnumerator(),
-		librarySymbol,
-		foreignSymbol;
+	var librarySymbols = getLibrarySymbols(library);
+	var librarySymbolLoop = librarySymbols.objectEnumerator();
+	var librarySymbol;
+	var foreignSymbol;
 
 	while (librarySymbol = librarySymbolLoop.nextObject()) {
 		if (!foreignSymbol && librarySymbol.name().trim() == name.trim()) {
@@ -1175,9 +1163,9 @@ function getForeignSymbolByName(name,library) {
 }
 
 function importForeignSymbol(symbol,library) {
-	var intoDocument = MSDocument.currentDocument().documentData(),
-		libraryController = AppController.sharedInstance().librariesController(),
-		foreignSymbol;
+	var intoDocument = MSDocument.currentDocument().documentData();
+	var libraryController = AppController.sharedInstance().librariesController();
+	var foreignSymbol;
 
 	if (MSApplicationMetadata.metadata().appVersion >= 50) {
 		var objectReference = MSShareableObjectReference.referenceForShareableObject_inLibrary(symbol,library);
