@@ -13,8 +13,9 @@ var gutterWidth = 15;
 var uiButtons = [];
 var swapButton;
 
+var libraryPredicate = NSPredicate.predicateWithFormat('enabled == 1 && valid == 1');
 var librarySort = NSSortDescriptor.sortDescriptorWithKey_ascending('name',1);
-var libraries = AppController.sharedInstance().librariesController().libraries().sortedArrayUsingDescriptors([librarySort]);
+var libraries = AppController.sharedInstance().librariesController().libraries().filteredArrayUsingPredicate(libraryPredicate).sortedArrayUsingDescriptors([librarySort]);
 var libraryLoop = libraries.objectEnumerator();
 var library;
 var libraryNames = ['Current Document'];
@@ -1025,7 +1026,7 @@ function getLibrary(context) {
 	alertWindow.addAccessoryView(symbolSource);
 
 	symbolSource.setCOSJSTargetFunction(function() {
-		var selectedLibrary = (symbolSource.indexOfSelectedItem() == 0) ? 0 : libraries[symbolSource.indexOfSelectedItem()];
+		var selectedLibrary = (symbolSource.indexOfSelectedItem() == 0) ? 0 : libraries[symbolSource.indexOfSelectedItem() - 1];
 
 		librarySymbols = getLibrarySymbols(selectedLibrary);
 

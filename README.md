@@ -42,6 +42,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.22** - Second attempt at fix for select box not populating correctly when swapping individual symbols.
 * **0.21** - Fix for select box not populating correctly when swapping individual symbols.
 * **0.20** - Improved select boxes when swapping instances, fixed broken check for updates after library swapping.
 * **0.19** - Improved layout of library swapping window, added function to create inventory of a library.
