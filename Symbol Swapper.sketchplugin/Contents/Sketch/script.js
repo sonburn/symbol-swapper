@@ -571,7 +571,7 @@ function createRedLabel(text,size,frame,bold) {
 }
 
 function createLibrarySelect(alertWindow,frame) {
-	var librarySelect = createSelect(libraryNames,0,frame);
+	var librarySelect = createDropdown(libraryNames,0,frame);
 
 	librarySelect.removeItemAtIndex(0);
 	librarySelect.insertItemWithTitle_atIndex('Swap to…',0);
@@ -795,12 +795,25 @@ function createSegmentedControl(items,frame) {
 	return control;
 }
 
-function createSelect(items,index,frame) {
+function createDropdown(items,index,frame) {
 	var select = NSPopUpButton.alloc().initWithFrame(frame);
 
 	select.addItemsWithTitles(items);
 	select.selectItemAtIndex(index);
 	select.setFont(NSFont.systemFontOfSize(12));
+
+	return select;
+}
+
+function createSelect(items,index,frame) {
+	var select = NSComboBox.alloc().initWithFrame(frame);
+	var selectItem = (index > -1) ? index : 0;
+
+	select.addItemsWithObjectValues(items);
+	select.selectItemAtIndex(selectItem);
+	select.setNumberOfVisibleItems(16);
+	select.setCompletes(1);
+	//select.setEditable(0);
 
 	return select;
 }
@@ -1008,11 +1021,11 @@ function getLibrary(context) {
 
 	alertWindow.addTextLabelWithValue('Select a new symbol source...');
 
-	var symbolSource = createSelect(libraryNames,selectLibrary,NSMakeRect(0,0,300,28));
+	var symbolSource = createDropdown(libraryNames,selectLibrary,NSMakeRect(0,0,300,28));
 	alertWindow.addAccessoryView(symbolSource);
 
 	symbolSource.setCOSJSTargetFunction(function() {
-		var selectedLibrary = (symbolSource.indexOfSelectedItem() == 0) ? 0 : libraries[symbolSource.indexOfSelectedItem() - 1];
+		var selectedLibrary = (symbolSource.indexOfSelectedItem() == 0) ? 0 : libraries[symbolSource.indexOfSelectedItem()];
 
 		librarySymbols = getLibrarySymbols(selectedLibrary);
 
@@ -1025,7 +1038,7 @@ function getLibrary(context) {
 		}
 
 		symbolMaster.removeAllItems();
-		symbolMaster.addItemsWithTitles(symbolArray);
+		symbolMaster.addItemsWithObjectValues(symbolArray);
 
 		if (context.selection.length == 1) {
 			var symbolName = (context.selection[0].class() == 'MSSymbolMaster') ? context.selection[0].name() : context.selection[0].symbolMaster().name();
@@ -1084,9 +1097,21 @@ function getLibrary(context) {
 		}
 	}
 
-	var symbolMaster = createSelect(symbolArray,selectSymbol,NSMakeRect(0,0,300,28));
+	var symbolMaster = createSelect(symbolArray,selectSymbol,NSMakeRect(0,0,300,26));
 	alertWindow.addAccessoryView(symbolMaster);
+
 	symbolMaster.setEnabled(0);
+	symbolMaster.setToolTip(symbolArray[symbolMaster.indexOfSelectedItem()]);
+
+	// Create the symbol master delegate
+	var symbolMasterDelegate = new MochaJSDelegate({
+		"comboBoxSelectionDidChange:" : (function() {
+			symbolMaster.setToolTip(symbolArray[symbolMaster.indexOfSelectedItem()]);
+		})
+	});
+
+	// Append the delegate to the symbol master
+	symbolMaster.setDelegate(symbolMasterDelegate.getClassInstance());
 
 	var includeSiblings = createCheckbox({name:'Swap siblings & overrides of selected instances',value:1},defaultSettings.includeSiblings,NSMakeRect(0,0,300,16));
 	alertWindow.addAccessoryView(includeSiblings);
