@@ -1102,12 +1102,17 @@ function getLibrary(context) {
 	alertWindow.addAccessoryView(symbolMaster);
 
 	symbolMaster.setEnabled(0);
-	symbolMaster.setToolTip(symbolArray[symbolMaster.indexOfSelectedItem()]);
+
+	if (symbolMaster.numberOfItems() > 0) {
+		symbolMaster.setToolTip(symbolArray[symbolMaster.indexOfSelectedItem()]);
+	}
 
 	// Create the symbol master delegate
 	var symbolMasterDelegate = new MochaJSDelegate({
 		"comboBoxSelectionDidChange:" : (function() {
-			symbolMaster.setToolTip(symbolArray[symbolMaster.indexOfSelectedItem()]);
+			var tooltip = (symbolMaster.numberOfItems() > 0) ? symbolArray[symbolMaster.indexOfSelectedItem()] : '';
+
+			symbolMaster.setToolTip(tooltip);
 		})
 	});
 

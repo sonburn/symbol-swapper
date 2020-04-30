@@ -6,15 +6,15 @@
 		<description>Swap the selected symbols and/or symbol instances to another master.</description>
 		<language>en</language>
 		<item>
-			<title>Version 0.22</title>
+			<title>Version 0.23</title>
 			<description>
 				<![CDATA[
 				<ul>
-				<li>Second attempt at fix for select box not populating correctly when swapping individual symbols.</li>
+				<li>Fix for application of tooltip causing error in population of symbols.</li>
 				</ul>
 				]]>
 			</description>
-			<enclosure url="https://github.com/sonburn/symbol-swapper/archive/master.zip" sparkle:version="0.22" />
+			<enclosure url="https://github.com/sonburn/symbol-swapper/archive/master.zip" sparkle:version="0.23" />
 		</item>
 	</channel>
 </rss>
