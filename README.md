@@ -42,6 +42,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.24** - Fix for Sketch 72.
 * **0.23** - Fix for application of tooltip causing error in population of symbols.
 * **0.22** - Second attempt at fix for select box not populating correctly when swapping individual symbols.
 * **0.21** - Fix for select box not populating correctly when swapping individual symbols.
@@ -76,4 +77,4 @@ If you find this plugin helpful, or would like to support my plugins in general,
 
 # License
 
-Copyright (c) 2019 Jason Burns (Sonburn). See LICENSE.md for further details.
+Copyright (c) 2021 Jason Burns (Sonburn). See LICENSE.md for further details.

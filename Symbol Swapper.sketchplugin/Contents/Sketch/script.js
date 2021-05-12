@@ -131,6 +131,8 @@ var swapSelected = function(context) {
 }
 
 var swapLibrary = function(context) {
+	// const libraryController = AppController.sharedInstance().librariesController();
+
 	const localSymbols = context.document.documentData().localSymbols();
 	const foreignSymbols = context.document.documentData().foreignSymbols();
 
@@ -381,6 +383,12 @@ var swapLibrary = function(context) {
 									// Update the foreign symbol
 									foreignSymbol.setLibraryID(selectedLibraryID);
 									foreignSymbol.setSourceLibraryName(selectedLibraryName);
+
+									// libraryController.syncForeignObject_withMaster_fromLibrary(
+									// 	foreignSymbol,
+									// 	null,
+									// 	libraryController.libraryForShareableObject(foreignSymbol.symbolMaster())
+									// )
 
 									// Iterate the changed symbol counter
 									changedSymbolCount++;
@@ -936,7 +944,7 @@ function googleAnalytics(context,category,action,label,value) {
 	// Tracking ID
 	url += '&tid=' + trackingID;
 	// Source
-	url += '&ds=sketch' + MSApplicationMetadata.metadata().appVersion;
+	url += '&ds=sketch' + sketch.version.sketch;
 	// Client ID
 	url += '&cid=' + uuid;
 	// pageview, screenview, event, transaction, item, social, exception, timing
@@ -1198,7 +1206,7 @@ function importForeignSymbol(symbol,library) {
 	var libraryController = AppController.sharedInstance().librariesController();
 	var foreignSymbol;
 
-	if (MSApplicationMetadata.metadata().appVersion >= 50) {
+	if (sketch.version.sketch >= 50) {
 		var objectReference = MSShareableObjectReference.referenceForShareableObject_inLibrary(symbol,library);
 
 		foreignSymbol = libraryController.importShareableObjectReference_intoDocument(objectReference,intoDocument);
