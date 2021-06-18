@@ -151,9 +151,12 @@ var swapLibrary = function(context) {
 		return false;
 	}
 
-	var alertWindow = createAlertWindow(context,'Symbol Swap Libraries','Swap all symbols from one source to another.');
+	var alertWindow = createWindow(context,'Symbol Swap Libraries','Swap all symbols from one source to another.');
 
-	var libraryListContentWidth = 300;
+	let alertContent = NSView.alloc().init()
+	alertContent.setFlipped(true)
+
+	var libraryListContentWidth = 350;
 	var libraryListContentGutter = 15;
 	var libraryListItemWidth = libraryListContentWidth - libraryListContentGutter;
 	var libraryListItemHeight = 92;
@@ -161,6 +164,7 @@ var swapLibrary = function(context) {
 	var libraryList = createScrollView(NSMakeRect(0,0,0,0));
 	var libraryListContent = createContentView(NSMakeRect(0,0,0,0));
 	var libraryListItemCount = 0;
+	var libraryListMaxDisplay = 3
 
 	if (localSymbols.length) {
 		var thisLibraryName = 'Current Document';
@@ -169,19 +173,16 @@ var swapLibrary = function(context) {
 
 		var libraryListItem = createContentView(NSMakeRect(0,libraryListItemCount*libraryListItemHeight,libraryListItemWidth,libraryListItemHeight));
 
-		var libraryTitleText = createLabel(thisLibraryName,12,NSMakeRect(libraryListItemPadding,libraryListItemPadding,300,16),1);
-
-		libraryTitleText.setToolTip(thisLibraryID);
-
-		var libraryCountText = createLabel(thisLibraryCount + ' symbols',12,NSMakeRect(libraryListItemPadding,32,300,16));
-		var librarySelect = createLibrarySelect(libraryListItem,NSMakeRect(libraryListItemPadding,54,110,28));
-		var libraryButton = createButton('Create Inventory Page',NSMakeRect(libraryListItemPadding+110,56,154,24));
+		var libraryTitleText = createLabel(thisLibraryName,12,NSMakeRect(libraryListItemPadding,libraryListItemPadding,libraryListContentWidth,16),1);
+		var libraryIDText = createLabel(thisLibraryID,12,NSMakeRect(libraryListItemPadding,32,libraryListContentWidth,16));
+		var librarySelect = createLibrarySelect(libraryListItem,NSMakeRect(libraryListItemPadding,54,202,28));
+		var libraryButton = createButton('Create Inventory',NSMakeRect(libraryListItemPadding+202,56,120,24));
 
 		libraryButton.setCOSJSTargetFunction(function() {
 			createInventoryPage(thisLibraryName,thisLibraryID);
 		});
 
-		[libraryTitleText,libraryCountText,librarySelect,libraryButton].forEach(i => libraryListItem.addSubview(i));
+		[libraryTitleText,libraryIDText,librarySelect,libraryButton].forEach(i => libraryListItem.addSubview(i));
 
 		libraryListContent.addSubview(libraryListItem);
 
@@ -234,24 +235,22 @@ var swapLibrary = function(context) {
 			var libraryTitleText;
 
 			if (sketch.getLibraries().find(l => l.id == thisLibraryID)) {
-				libraryTitleText = createLabel(thisLibraryName,12,NSMakeRect(libraryListItemPadding,libraryListItemPadding,300,16),1);
+				libraryTitleText = createLabel(`${thisLibraryName} (${thisLibraryCount})`,12,NSMakeRect(libraryListItemPadding,libraryListItemPadding,libraryListContentWidth,16),1);
 			} else {
-				libraryTitleText = createRedLabel(thisLibraryName + ' (Missing)',12,NSMakeRect(libraryListItemPadding,libraryListItemPadding,300,16),1);
+				libraryTitleText = createRedLabel(`${thisLibraryName} (${thisLibraryCount}) [Missing]`,12,NSMakeRect(libraryListItemPadding,libraryListItemPadding,libraryListContentWidth,16),1);
 			}
 
-			libraryTitleText.setToolTip(thisLibraryID);
-
-			var libraryCountText = createLabel(thisLibraryCount + ' symbols',12,NSMakeRect(libraryListItemPadding,32,300,16));
-			var librarySelect = createLibrarySelect(alertWindow,NSMakeRect(libraryListItemPadding,54,110,28));
-			var libraryButton = createButton('Create Inventory Page',NSMakeRect(libraryListItemPadding+110,56,154,24));
+			var libraryIDText = createLabel(thisLibraryID,12,NSMakeRect(libraryListItemPadding,32,libraryListContentWidth,16));
+			var librarySelect = createLibrarySelect(alertWindow,NSMakeRect(libraryListItemPadding,54,202,28));
+			var libraryButton = createButton('Create Inventory',NSMakeRect(libraryListItemPadding+202,56,120,24));
 
 			libraryButton.setCOSJSTargetFunction(function() {
 				createInventoryPage(thisLibraryName,thisLibraryID);
 			});
 
-			libraryListItem.addSubview(createListDivider(NSMakeRect(0,0,300,1)));
+			libraryListItem.addSubview(createListDivider(NSMakeRect(0,0,libraryListContentWidth,1)));
 
-			[libraryTitleText,libraryCountText,librarySelect,libraryButton].forEach(i => libraryListItem.addSubview(i));
+			[libraryTitleText,libraryIDText,librarySelect,libraryButton].forEach(i => libraryListItem.addSubview(i));
 
 			libraryListContent.addSubview(libraryListItem);
 
@@ -260,17 +259,21 @@ var swapLibrary = function(context) {
 	}
 
 	var libraryListContentHeight = libraryListItemHeight * libraryListItemCount;
-	var libraryListHeight = (libraryListItemCount > 4) ? libraryListItemHeight * 4 : libraryListContentHeight;
+	var libraryListHeight = (libraryListItemCount > libraryListMaxDisplay) ? libraryListItemHeight * libraryListMaxDisplay : libraryListContentHeight;
 
 	libraryListContent.frame = NSMakeRect(0,0,libraryListItemWidth,libraryListContentHeight);
 	libraryList.frame = NSMakeRect(0,0,libraryListContentWidth,libraryListHeight);
 	libraryList.setDocumentView(libraryListContent);
 
-	alertWindow.addAccessoryView(libraryList);
+	alertContent.addSubview(libraryList);
 
-	var swapType = createRadioButtons(['Swap with symbols of same name','Swap with symbols of same ID'],defaultSettings.librarySwapType);
+	var swapType = createRadioButtons(['Swap with symbols of same name','Swap with symbols of same ID'],defaultSettings.librarySwapType,null,null,CGRectGetMaxY(alertContent.subviews().lastObject().frame()) + 16);
 
-	alertWindow.addAccessoryView(swapType);
+	alertContent.addSubview(swapType);
+
+	alertContent.frame = NSMakeRect(0,0,libraryListContentWidth,CGRectGetMaxY(swapType.frame()))
+
+	alertWindow.accessoryView = alertContent
 
 	swapButton = alertWindow.addButtonWithTitle('Swap');
 	alertWindow.addButtonWithTitle('Cancel');
@@ -466,6 +469,19 @@ function createAlertWindow(context,name,text) {
 	if (text) { alertWindow.setInformativeText(text); }
 
 	return alertWindow;
+}
+
+function createWindow(context,name,text) {
+	let alert = NSAlert.alloc().init()
+	let iconPath = context.plugin.urlForResourceNamed('icon.png').path()
+	let icon = NSImage.alloc().initByReferencingFile(iconPath)
+
+	alert.setIcon(icon)
+	alert.setMessageText(name)
+
+	if (text) alert.setInformativeText(text)
+
+	return alert
 }
 
 function createButton(label,frame) {

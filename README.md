@@ -38,6 +38,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.25** - Fix for window truncation when swapping libraries.
 * **0.24** - Fix for Sketch 72.
 * **0.23** - Fix for application of tooltip causing error in population of symbols.
 * **0.22** - Second attempt at fix for select box not populating correctly when swapping individual symbols.
