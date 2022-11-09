@@ -22,7 +22,7 @@ Swap the selected symbols and/or symbol instances to another master, or swap ent
 # Installation
 
 ## Automatic
-Search for Symbol Swapper in [Sketchrunner](http://sketchrunner.com/) or [Sketch Toolbox](http://sketchtoolbox.com/) if you have one of those installed.
+Search for Symbol Swapper in [Sketchrunner](http://sketchrunner.com/).
 
 Once installed, Sketch will automatically notify you when an update is available (version 0.1 and later).
 
@@ -38,6 +38,7 @@ To find your plugins directory...
 
 # Changelog
 
+* **0.26** - Fix for Sketch 94.
 * **0.25** - Fix for window truncation when swapping libraries.
 * **0.24** - Fix for Sketch 72.
 * **0.23** - Fix for application of tooltip causing error in population of symbols.
@@ -74,4 +75,4 @@ If you find this plugin helpful, or would like to support my plugins in general,
 
 # License
 
-Copyright (c) 2021 Jason Burns (Sonburn). See LICENSE.md for further details.
+Copyright (c) 2022 Jason Burns (Sonburn). See LICENSE.md for further details.

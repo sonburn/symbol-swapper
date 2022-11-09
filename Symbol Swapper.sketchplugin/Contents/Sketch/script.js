@@ -15,7 +15,13 @@ var swapButton;
 
 var libraryPredicate = NSPredicate.predicateWithFormat('enabled == 1 && valid == 1');
 var librarySort = NSSortDescriptor.sortDescriptorWithKey_ascending('name',1);
-var libraries = AppController.sharedInstance().librariesController().libraries().filteredArrayUsingPredicate(libraryPredicate).sortedArrayUsingDescriptors([librarySort]);
+
+if (sketch.version.sketch >= 94) {
+	var libraries = AppController.sharedInstance().librariesController().appLibraries().filteredArrayUsingPredicate(libraryPredicate).sortedArrayUsingDescriptors([librarySort]);
+} else {
+	var libraries = AppController.sharedInstance().librariesController().libraries().filteredArrayUsingPredicate(libraryPredicate).sortedArrayUsingDescriptors([librarySort]);
+}
+
 var libraryLoop = libraries.objectEnumerator();
 var library;
 var libraryNames = ['Current Document'];
